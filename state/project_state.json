@@ -1,0 +1,14 @@
+{
+  "baseline_path": "bots/baseline",
+  "candidate_path": "bots/candidate",
+  "current_experiment": "reports/iteration1-validation-20260805T2120",
+  "current_hypothesis": "Active per-unit paths, legal adjacent stances, and layout-only route epochs reduce replans without changing Store or strategy policy.",
+  "current_milestone": "NEXT Iteration 1: navigation/action criteria validated as separate checkpoint",
+  "last_codex_outcome": "PASSED: focused 34/34, make static 97/97 plus compileall, smoke 4/4, and required regression 24/24 command-clean.",
+  "last_codex_report": "reports/iteration1-validation-20260805T2120",
+  "last_codex_task": "Validate NEXT_ITERATIONS_PLAN Iteration 1 navigation/action criteria already delivered by the CURRENT_PLAN checkpoint; no duplicate source edits.",
+  "last_local_report": "reports/local-20260805T210935Z",
+  "next_recommended_task": "Read and inspect NEXT_ITERATIONS_PLAN Iteration 2, then implement only the Store protocol checkpoint if its pre-edit criteria are satisfied.",
+  "schema_version": 1,
+  "updated_at": "2026-08-05T21:11:38Z"
+}

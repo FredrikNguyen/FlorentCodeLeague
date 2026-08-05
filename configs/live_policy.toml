@@ -1,0 +1,23 @@
+# The user explicitly authorized Codex to upload, activate, observe, and roll back.
+autonomous_live_ops = true
+auto_upload = true
+auto_activate = true
+auto_rollback = true
+
+# Observe a meaningful window before score-based decisions. Reliability failures bypass it.
+minimum_series = 12
+preferred_series = 24
+
+# Candidate is worse when both its raw live score and, when available, adjusted score
+# fall below the last known-good version by these margins.
+raw_score_rollback_margin = 0.05
+adjusted_score_rollback_margin = 0.03
+
+# Hard guardrails.
+rollback_on_reliability_failure = true
+rollback_on_submission_error = true
+submission_ready_timeout_seconds = 300
+poll_interval_seconds = 15
+
+# Prevent accidental chains of deployments without first resolving the current observation.
+allow_deploy_while_observing = false

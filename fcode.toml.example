@@ -1,0 +1,6 @@
+# Let `fcode starter` generate the authoritative current structure if needed.
+# Keep local defaults conservative and enforce the ladder TLE in scripted runs.
+
+[run]
+seed = 1
+replay = "replays/latest.replay26"

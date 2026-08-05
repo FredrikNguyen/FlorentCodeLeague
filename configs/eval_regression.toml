@@ -1,0 +1,9 @@
+candidate = "bots/candidate"
+baseline = "bots/baseline"
+tle_ms = 10
+seeds = [1, 19, 101]
+maps = [
+  "sprint", "string", "bridge", "crossfire", "atoll",
+  "sweden", "longship", "vault", "aurora"
+]
+side_swap = true

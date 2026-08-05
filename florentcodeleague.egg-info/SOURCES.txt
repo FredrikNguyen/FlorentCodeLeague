@@ -1,0 +1,8 @@
+README.md
+main.py
+pyproject.toml
+florentcodeleague.egg-info/PKG-INFO
+florentcodeleague.egg-info/SOURCES.txt
+florentcodeleague.egg-info/dependency_links.txt
+florentcodeleague.egg-info/requires.txt
+florentcodeleague.egg-info/top_level.txt
