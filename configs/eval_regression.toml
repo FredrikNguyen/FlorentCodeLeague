@@ -1,5 +1,5 @@
 candidate = "bots/candidate"
-baseline = "bots/baseline"
+baseline = "bots/versions/v0008_reviewer-current-best_20260806-1209_3f2505d7"
 tle_ms = 10
 seeds = [1, 19, 101]
 maps = [

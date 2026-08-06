@@ -3,7 +3,7 @@ from __future__ import annotations
 import unittest
 from unittest.mock import patch
 
-from fcode import Direction, EntityType, Environment, Position
+from fcode import Direction, EntityType, Environment, Position, Team
 
 from bots.candidate.bot.actions import TurnActions
 from bots.candidate.bot.builder import BuilderStateData, _build_route, _harvester, _move
@@ -58,6 +58,36 @@ class CandidateBuilderNavigationTest(unittest.TestCase):
         with patch("bots.candidate.bot.builder._move", return_value=True) as move:
             self.assertTrue(_harvester(controller, state, TurnActions(controller)))
         self.assertTrue(move.call_args.kwargs["adjacent"])
+
+    def test_adjacent_navigation_waits_for_only_stance_to_clear(self) -> None:
+        ore, stance = Position(2, 1), Position(2, 2)
+        terrain = {
+            Position(2, 0): Environment.WALL,
+            Position(3, 1): Environment.WALL,
+            Position(1, 1): Environment.WALL,
+            ore: Environment.ORE_TITANIUM,
+        }
+        controller = FakeController(width=5, height=4, position=Position(3, 2), terrain=terrain)
+        controller.entities[10] = FakeEntity(EntityType.CONVEYOR, stance, Team.A, Direction.NORTH)
+        controller.entities[30] = FakeEntity(EntityType.BUILDER_BOT, stance, Team.A)
+        world = WorldMemory(5, 4)
+        world.observe(controller, 0)
+        state = BuilderStateData(world=world, navigator=Navigator(5, 4, world.is_navigation_blocked), ore_target=ore)
+
+        for _ in range(2):
+            controller.calls.clear()
+            self.assertFalse(_move(controller, state, ore, TurnActions(controller), adjacent=True))
+            self.assertEqual(Position(3, 2), controller.get_position())
+            self.assertEqual([], [call for call in controller.calls if call[0] == "move"])
+            controller.advance()
+            world.observe(controller, controller.round)
+
+        controller.entities.pop(30)
+        controller.advance()
+        world.observe(controller, controller.round)
+        controller.calls.clear()
+        self.assertTrue(_move(controller, state, ore, TurnActions(controller), adjacent=True))
+        self.assertEqual(stance, controller.get_position())
 
 
 if __name__ == "__main__":

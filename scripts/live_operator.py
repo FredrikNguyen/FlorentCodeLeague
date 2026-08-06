@@ -105,7 +105,7 @@ def active_version(*payloads: Any):
         for item in walk(data):
             if not isinstance(item, dict):
                 continue
-            active = item.get("active") is True or item.get("is_active") is True
+            active = item.get("active") is True or item.get("is_active") is True or item.get("isActive") is True
             if active:
                 return item.get("version") or item.get("submission_version") or item.get("id")
             for key in ("active_version", "active_submission_version", "submission_version"):

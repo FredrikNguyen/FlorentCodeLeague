@@ -49,7 +49,7 @@ class WorldMemory:
             if environment == Environment.ORE_TITANIUM: self.ore_positions.add(pos)
             try: building_id, builder_id = ct.get_tile_building_id(pos), ct.get_tile_builder_bot_id(pos)
             except Exception: building_id, builder_id = None, None
-            entity_id = building_id if building_id is not None else builder_id
+            entity_id = builder_id if builder_id is not None else building_id
             if entity_id is None or entity_id == own_id: self._remove_dynamic(pos); continue
             try: entity_type = ct.get_entity_type(entity_id); team = ct.get_team(entity_id)
             except Exception: continue

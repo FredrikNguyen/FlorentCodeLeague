@@ -6,6 +6,7 @@ from fcode import Direction, EntityType, Position
 from .actions import TurnActions, cpu_is_safe
 from .comms import Slot, decode_alert, epoch_distance
 from .offense import score_ally_insertion, score_enemy_ejection, score_sabotage_target
+from .types import EconomySnapshot
 
 
 CARDINALS = (Direction.NORTH, Direction.EAST, Direction.SOUTH, Direction.WEST)
@@ -61,25 +62,120 @@ def choose_fire_target(ct: object, targets: list[Position] | tuple[Position, ...
     return max(ranked, key=lambda item: (item[0], -item[1].y, -item[1].x))[1]
 
 
-def choose_gunner_rotation(ct: object) -> Direction | None:
+def _lane_score(ct: object, position: Position, direction: Direction) -> int:
+    try:
+        tiles = tuple(ct.get_attackable_tiles_from(position, direction, EntityType.GUNNER))[:32]
+    except Exception:
+        return 0
+    score = 0
+    for target in tiles:
+        try:
+            if not ct.can_fire_from(position, direction, EntityType.GUNNER, target):
+                continue
+            _, entity_type = _entity_at(ct, target)
+            score += {
+                EntityType.CORE: 8,
+                EntityType.BUILDER_BOT: 6,
+                EntityType.GUNNER: 5,
+                EntityType.SENTINEL: 5,
+                EntityType.HARVESTER: 4,
+                EntityType.CONVEYOR: 2,
+            }.get(entity_type, 1)
+        except Exception:
+            continue
+    return score
+
+
+def choose_gunner_rotation(ct: object, *, minimum_gain: int = 1) -> Direction | None:
     if not cpu_is_safe(ct): return None
     try:
         position = ct.get_position()
+        current = ct.get_direction()
     except Exception: return None
     choices: list[tuple[int, Direction]] = []
     for direction in CARDINALS:
-        try:
-            tiles = tuple(ct.get_attackable_tiles_from(position, direction, EntityType.GUNNER))[:32]
-        except Exception: continue
-        count = 0
-        for target in tiles:
-            try:
-                if ct.can_fire_from(position, direction, EntityType.GUNNER, target):
-                    count += 1
-            except Exception: continue
-        choices.append((count, direction))
+        choices.append((_lane_score(ct, position, direction), direction))
     if not choices: return None
-    return max(choices, key=lambda item: (item[0], -CARDINALS.index(item[1])))[1]
+    best_score, best_direction = max(choices, key=lambda item: (item[0], -CARDINALS.index(item[1])))
+    if best_score <= 0 or best_score <= _lane_score(ct, position, current) + max(0, int(minimum_gain)):
+        return None
+    return best_direction
+
+
+def choose_defensive_fire_target(
+    ct: object,
+    targets: list[Position] | tuple[Position, ...] | None = None,
+    *,
+    protected_asset: Position | None = None,
+) -> Position | None:
+    """Target the threat that can damage a protected asset before economy."""
+    if not cpu_is_safe(ct):
+        return None
+    if targets is None:
+        try:
+            targets = tuple(ct.get_attackable_tiles())
+        except Exception:
+            return None
+    ranked: list[tuple[int, Position]] = []
+    for target in tuple(targets)[:64]:
+        try:
+            if not ct.can_fire(target):
+                continue
+        except Exception:
+            continue
+        entity_id, entity_type = _entity_at(ct, target)
+        if entity_type is None:
+            continue
+        priority = {
+            EntityType.CORE: 1000,
+            EntityType.BUILDER_BOT: 900,
+            EntityType.GUNNER: 850,
+            EntityType.SENTINEL: 850,
+            EntityType.LAUNCHER: 800,
+            EntityType.HARVESTER: 700,
+            EntityType.SPLITTER: 650,
+            EntityType.CONVEYOR: 600,
+            EntityType.BARRIER: 400,
+        }.get(entity_type, 0)
+        if protected_asset is not None:
+            priority += max(0, 20 - protected_asset.distance_squared(target))
+        if priority > 0:
+            ranked.append((priority, target))
+    return max(ranked, key=lambda item: (item[0], -item[1].y, -item[1].x))[1] if ranked else None
+
+
+def turret_ammo_demand(ct: object, *, horizon_rounds: int = 6) -> int:
+    """Bounded demand report; Core decides whether the deficit is fundable."""
+    try:
+        entity_ids = tuple(ct.get_nearby_buildings())[:64]
+    except Exception:
+        entity_ids = ()
+    demand = 0
+    for entity_id in entity_ids:
+        try:
+            entity_type = ct.get_entity_type(entity_id)
+            legal_shots = max(0, int(horizon_rounds)) // (1 if entity_type == EntityType.GUNNER else 2)
+            if entity_type == EntityType.GUNNER:
+                demand += min(3, legal_shots) * 4
+            elif entity_type == EntityType.SENTINEL:
+                demand += min(2, legal_shots) * 10
+        except Exception:
+            continue
+    return demand
+
+
+def maybe_convert_ammo(ct: object, snapshot: EconomySnapshot, requested_ammo: int, *, max_per_turn: int = 40) -> int:
+    deficit = max(0, int(requested_ammo) - int(snapshot.ammo))
+    amount = min(deficit, max(0, int(snapshot.free_titanium)), max(0, int(max_per_turn)))
+    if amount <= 0:
+        return 0
+    try:
+        if not ct.can_convert_ammo(amount):
+            return 0
+        ct.convert_ammo(amount)
+    except Exception:
+        return 0
+    return amount
 
 
 def _default_destinations(ct: object, origin: Position) -> tuple[Position, ...]:

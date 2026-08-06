@@ -2,16 +2,16 @@ from __future__ import annotations
 
 from enum import IntEnum
 from fcode import Position
-from .types import Assignment, Budget, Opening, Phase, Project, ProjectState, Threat, ThreatKind
+from .types import Assignment, Budget, Opening, Phase, Project, ProjectState, StrategyPhase, Threat, ThreatKind, ThreatReport
 
 
 class Slot(IntEnum):
-    SCHEMA_VERSION = 0; STRATEGY = 1; PROJECT_0 = 2; ENEMY_CORE = 3; PROJECT_2 = 4; PROJECT_1 = 5; DESIRED_BUILDERS = 6; AMMO_TARGET = 7; DEFENSE_ALERT = 8; RALLY = 9; CLAIM_0 = 10; CLAIM_1 = 11; CLAIM_2 = 12; BUDGET = 13; DIAGNOSTICS = 14; EPOCH = 15
+    SCHEMA_VERSION = 0; STRATEGY = 1; PROJECT_0 = 2; ENEMY_CORE = 3; PROJECT_2 = 4; PROJECT_1 = 5; DESIRED_BUILDERS = 6; AMMO_TARGET = 7; DEFENSE_ALERT = 8; RALLY = 9; CLAIM_0 = 10; CLAIM_1 = 11; CLAIM_2 = 12; PROJECT_3 = 13; DIAGNOSTICS = 14; CLAIM_3 = 15
     PRIMARY_ORE = PROJECT_0; LOGISTICS = PROJECT_1; THREAT = PROJECT_2; RESERVED = DIAGNOSTICS
 
 
-SCHEMA_VERSION = 3; UNKNOWN = 0; COORD_BITS = 10; EPOCH_BITS = 6; STATE_BITS = 3; OWNER_BITS = 16; COORD_MASK = (1 << COORD_BITS) - 1; EPOCH_MASK = (1 << EPOCH_BITS) - 1; STATE_MASK = (1 << STATE_BITS) - 1; OWNER_MASK = (1 << OWNER_BITS) - 1; MAX_U32 = 0xFFFFFFFF
-PROJECT_SLOTS = (Slot.PROJECT_0, Slot.PROJECT_1, Slot.PROJECT_2); CLAIM_SLOTS = (Slot.CLAIM_0, Slot.CLAIM_1, Slot.CLAIM_2)
+SCHEMA_VERSION = 4; PROJECT_COUNT = 4; UNKNOWN = 0; COORD_BITS = 10; EPOCH_BITS = 6; STATE_BITS = 3; OWNER_BITS = 16; COORD_MASK = (1 << COORD_BITS) - 1; EPOCH_MASK = (1 << EPOCH_BITS) - 1; STATE_MASK = (1 << STATE_BITS) - 1; OWNER_MASK = (1 << OWNER_BITS) - 1; MAX_U32 = 0xFFFFFFFF
+PROJECT_SLOTS = (Slot.PROJECT_0, Slot.PROJECT_1, Slot.PROJECT_2, Slot.PROJECT_3); CLAIM_SLOTS = (Slot.CLAIM_0, Slot.CLAIM_1, Slot.CLAIM_2, Slot.CLAIM_3)
 PROJECT_STATES = tuple(ProjectState); PROJECT_STATE_INDEX = {state: index for index, state in enumerate(PROJECT_STATES)}
 SLOT_OWNER = {slot: "core" for slot in Slot}
 for _index, _slot in enumerate(PROJECT_SLOTS): SLOT_OWNER[_slot] = _index
@@ -56,7 +56,7 @@ def decode_assignment(value: int) -> Assignment | None:
 
 
 def _slot(owner_index: int, slots: tuple[Slot, ...]) -> Slot:
-    if owner_index not in (0, 1, 2): raise ValueError("slot owner must be 0, 1, or 2")
+    if not isinstance(owner_index, int) or isinstance(owner_index, bool) or not 0 <= owner_index < PROJECT_COUNT: raise ValueError("slot owner is outside the project range")
     return slots[owner_index]
 def claim_slot(owner_index: int) -> Slot: return _slot(owner_index, CLAIM_SLOTS)
 def project_slot(owner_index: int) -> Slot: return _slot(owner_index, PROJECT_SLOTS)
@@ -73,7 +73,7 @@ def _schema_ok(ct: object) -> bool:
 
 
 def read_assignment(ct: object, index: int) -> Assignment | None:
-    if index not in (0, 1, 2) or not _schema_ok(ct): return None
+    if not isinstance(index, int) or isinstance(index, bool) or not 0 <= index < PROJECT_COUNT or not _schema_ok(ct): return None
     return decode_assignment(_store(ct, claim_slot(index)) or 0)
 
 
@@ -98,7 +98,7 @@ def decode_project(value: int, width: int, height: int | None = None) -> Project
 
 
 def read_project(ct: object, index: int) -> Project | None:
-    if index not in (0, 1, 2) or not _schema_ok(ct): return None
+    if not isinstance(index, int) or isinstance(index, bool) or not 0 <= index < PROJECT_COUNT or not _schema_ok(ct): return None
     value = _store(ct, project_slot(index))
     if value is None: return None
     try: return decode_project(value, int(ct.get_map_width()), int(ct.get_map_height()))
@@ -127,6 +127,69 @@ def decode_threat(value: int, width: int, height: int | None = None) -> Threat |
     if not _number(value) or not 0 < value <= MAX_U32: return None
     position, kind = unpack_position(value & COORD_MASK, width, height), (value >> COORD_BITS) & 15
     return None if position is None or kind >= len(tuple(ThreatKind)) else Threat(position, tuple(ThreatKind)[kind])
+
+
+THREAT_KIND_BITS = 4
+THREAT_SEVERITY_BITS = 6
+THREAT_EXPIRY_BITS = 6
+THREAT_KIND_MASK = (1 << THREAT_KIND_BITS) - 1
+THREAT_SEVERITY_MASK = (1 << THREAT_SEVERITY_BITS) - 1
+
+
+def encode_threat_report(report: ThreatReport, width: int, height: int | None = None) -> int:
+    """Pack the shared threat payload without leaking a target object into Store."""
+    kind = tuple(ThreatKind).index(report.kind)
+    severity = max(0, min(THREAT_SEVERITY_MASK, int(report.severity)))
+    expiry = int(report.expiry_round) & EPOCH_MASK
+    return pack_position(report.position, width, height) | (kind << COORD_BITS) | (severity << (COORD_BITS + THREAT_KIND_BITS)) | (expiry << (COORD_BITS + THREAT_KIND_BITS + THREAT_SEVERITY_BITS))
+
+
+def decode_threat_report(value: int, width: int, height: int | None = None) -> ThreatReport | None:
+    if not _number(value) or not 0 < value <= MAX_U32:
+        return None
+    position = unpack_position(value & COORD_MASK, width, height)
+    kind_value = (value >> COORD_BITS) & THREAT_KIND_MASK
+    if position is None or kind_value >= len(tuple(ThreatKind)):
+        return None
+    severity = (value >> (COORD_BITS + THREAT_KIND_BITS)) & THREAT_SEVERITY_MASK
+    expiry = (value >> (COORD_BITS + THREAT_KIND_BITS + THREAT_SEVERITY_BITS)) & EPOCH_MASK
+    return ThreatReport(tuple(ThreatKind)[kind_value], position, severity=severity, expiry_round=expiry)
+
+
+def read_shared_threat(ct: object, *, current_round: int | None = None) -> ThreatReport | None:
+    try:
+        value = _store(ct, Slot.DEFENSE_ALERT)
+        report = decode_threat_report(value or 0, int(ct.get_map_width()), int(ct.get_map_height()))
+        now = int(ct.get_current_round() if current_round is None else current_round)
+    except Exception:
+        return None
+    if report is None or epoch_distance(report.expiry_round, now & EPOCH_MASK) > 32:
+        return None
+    return report
+
+
+def write_shared_threat(ct: object, report: ThreatReport | None, *, writer: str = "defender") -> bool:
+    if not can_write(Slot.DEFENSE_ALERT, writer):
+        return False
+    if report is None:
+        return _write(ct, Slot.DEFENSE_ALERT, 0)
+    try:
+        return _write(ct, Slot.DEFENSE_ALERT, encode_threat_report(report, int(ct.get_map_width()), int(ct.get_map_height())))
+    except Exception:
+        return False
+
+
+def encode_global_strategy(strategy: StrategyPhase, phase: Phase, opening: Opening) -> int:
+    """Extend the existing strategy word while preserving its low bits."""
+    return encode_strategy(phase, opening) | (tuple(StrategyPhase).index(strategy) << 8)
+
+
+def decode_global_strategy(value: int) -> tuple[StrategyPhase, Phase, Opening] | None:
+    if not _number(value) or value < 0:
+        return None
+    decoded = decode_strategy(value & 0xFF)
+    index = (value >> 8) & 0xF
+    return None if decoded is None or index >= len(tuple(StrategyPhase)) else (tuple(StrategyPhase)[index], decoded[0], decoded[1])
 
 
 def encode_budget(budget: Budget) -> int:

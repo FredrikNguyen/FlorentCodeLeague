@@ -71,6 +71,7 @@ class Navigator:
         return next((index for index in range(self.active_index, len(self.active_path)) if self.active_path[index] == start), None)
 
     def _fallback(self, start: Position, goals: tuple[Position, ...], can_step: Callable[[Direction], bool] | None, forbidden: frozenset[Position]) -> Direction:
+        if not goals: return Direction.CENTRE
         choices: list[tuple[int, int, Direction]] = []
         for order, direction in enumerate(CARDINALS):
             candidate = start.add(direction)
