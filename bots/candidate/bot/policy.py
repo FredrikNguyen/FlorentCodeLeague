@@ -3,7 +3,40 @@ from __future__ import annotations
 
 from fcode import Position
 
-from .types import BuilderState, Opening, OpeningDescriptor, Phase, Role
+from .types import BuilderState, DefenseMode, EconomySnapshot, Opening, OpeningDescriptor, Phase, Role, StrategyPhase, WorkIntent
+
+
+PERSISTENT_DEFENDERS_SMALL = 2
+PERSISTENT_DEFENDERS_LARGE = 3
+MIN_MAINTENANCE_WORKERS = 1
+ECONOMY_READY_STABLE_ROUNDS = 8
+ENDGAME_START = 850
+ATTACK_PREPARATION_RESERVE = 80
+REQUIRED_HEALTHY_ROUTES = 4
+MIN_FREE_BUILDERS_FOR_OFFENSE = 2
+
+
+def choose_work_intent(
+    *,
+    critical_threat: bool = False,
+    route_repair_due: bool = False,
+    route_owner: bool = False,
+    attack_preparation: bool = False,
+    attack: bool = False,
+    exploration_complete: bool = False,
+) -> WorkIntent:
+    """Resolve one deterministic productive responsibility for a Builder."""
+    if critical_threat:
+        return WorkIntent.CRITICAL_DEFENSE
+    if route_repair_due:
+        return WorkIntent.REPAIR_ROUTE
+    if route_owner:
+        return WorkIntent.ROUTE_OWNER
+    if attack:
+        return WorkIntent.ATTACK
+    if attack_preparation:
+        return WorkIntent.ATTACK_PREPARATION
+    return WorkIntent.PATROL_LOGISTICS if exploration_complete else WorkIntent.DISCOVER_ORE
 
 
 def assign_role(entity_id: int, phase: Phase = Phase.OPENING, opening: Opening | None = None) -> Role:
@@ -126,3 +159,90 @@ def nearest_position(origin: Position, positions: tuple[Position, ...] | list[Po
     if not positions:
         return None
     return min(positions, key=lambda pos: (origin.distance_squared(pos), pos.y, pos.x))
+
+
+def required_route_count(*, reachable_ore_count: int = 0, exploration_complete: bool = False, max_routes: int = REQUIRED_HEALTHY_ROUTES) -> int:
+    """Require all four routes unless exhaustive exploration proves fewer exist."""
+    limit = max(1, int(max_routes))
+    if not exploration_complete:
+        return limit
+    return max(1, min(limit, max(0, int(reachable_ore_count))))
+
+
+def economy_ready_for_attack(snapshot: EconomySnapshot, *, required_routes: int = REQUIRED_HEALTHY_ROUTES, stable_rounds: int = ECONOMY_READY_STABLE_ROUNDS) -> bool:
+    return bool(snapshot.maintaining_routes >= max(1, int(required_routes)) and snapshot.broken_routes == 0 and snapshot.free_titanium >= ATTACK_PREPARATION_RESERVE and int(stable_rounds) >= ECONOMY_READY_STABLE_ROUNDS)
+
+
+def choose_strategy_phase(
+    snapshot: EconomySnapshot,
+    *,
+    defense_mode: DefenseMode = DefenseMode.CLEAR,
+    enemy_core_fresh: bool = False,
+    attack_roles_assigned: bool = False,
+    free_builders: int | None = None,
+    required_routes: int = REQUIRED_HEALTHY_ROUTES,
+    direct_core_window: bool = False,
+    stable_rounds: int = 0,
+    endgame_start: int = ENDGAME_START,
+) -> StrategyPhase:
+    if defense_mode == DefenseMode.CRITICAL:
+        return StrategyPhase.DEFENSE_ALERT
+    if snapshot.round >= int(endgame_start):
+        return StrategyPhase.ENDGAME
+    if snapshot.maintaining_routes <= 0:
+        return StrategyPhase.FIRST_ROUTE_RUSH if snapshot.active_projects else StrategyPhase.BOOTSTRAP_ECON
+    if snapshot.broken_routes > 0 or snapshot.failed_projects > 0 and snapshot.maintaining_routes <= 1:
+        return StrategyPhase.RECOVERY
+    economy_gate = economy_ready_for_attack(snapshot, required_routes=required_routes, stable_rounds=stable_rounds)
+    if defense_mode == DefenseMode.ACTIVE and economy_gate:
+        return StrategyPhase.DEFENSE_ALERT
+    if not economy_gate:
+        return StrategyPhase.ECONOMY_EXPANSION
+    if free_builders is not None and int(free_builders) <= 0:
+        return StrategyPhase.ECONOMY_EXPANSION
+    if not enemy_core_fresh:
+        return StrategyPhase.ATTACK_PREPARATION
+    if free_builders is not None and int(free_builders) < MIN_FREE_BUILDERS_FOR_OFFENSE:
+        return StrategyPhase.ATTACK_PREPARATION
+    if free_builders is None and not attack_roles_assigned:
+        return StrategyPhase.ATTACK_PREPARATION
+    if direct_core_window:
+        return StrategyPhase.CORE_SIEGE
+    return StrategyPhase.OFFENSIVE_PRESSURE
+
+
+def choose_effective_phase(global_phase: StrategyPhase, defense_mode: DefenseMode) -> StrategyPhase:
+    return StrategyPhase.DEFENSE_ALERT if defense_mode in (DefenseMode.ACTIVE, DefenseMode.CRITICAL) else global_phase
+
+
+def persistent_defender_count(*, map_area: int = 0, recent_threat: bool = False) -> int:
+    return PERSISTENT_DEFENDERS_LARGE if int(map_area) >= 500 or recent_threat else PERSISTENT_DEFENDERS_SMALL
+
+
+def allocate_roles(
+    builder_ids: tuple[int, ...] | list[int],
+    *,
+    phase: StrategyPhase,
+    defenders: int = PERSISTENT_DEFENDERS_SMALL,
+    maintenance_workers: int = MIN_MAINTENANCE_WORKERS,
+    scouts: int = 1,
+) -> dict[int, Role]:
+    """Stable deterministic role allocation; project owners are applied by Core first."""
+    ids = tuple(sorted(set(int(entity_id) for entity_id in builder_ids)))
+    result: dict[int, Role] = {}
+    if phase in (StrategyPhase.BOOTSTRAP_ECON, StrategyPhase.FIRST_ROUTE_RUSH, StrategyPhase.ECONOMY_EXPANSION, StrategyPhase.RECOVERY):
+        for index, entity_id in enumerate(ids):
+            result[entity_id] = Role.ECONOMY if index < max(1, len(ids) - max(0, int(scouts))) else Role.SCOUT
+        return result
+    defender_ids = ids[: max(0, min(len(ids), int(defenders)))]
+    for entity_id in defender_ids:
+        result[entity_id] = Role.DEFENDER
+    remaining = [entity_id for entity_id in ids if entity_id not in defender_ids]
+    for entity_id in remaining[: max(0, int(maintenance_workers))]:
+        result[entity_id] = Role.REPAIR
+    remaining = [entity_id for entity_id in remaining if entity_id not in result]
+    for entity_id in remaining[: max(0, int(scouts))]:
+        result[entity_id] = Role.SCOUT
+    for entity_id in remaining:
+        result[entity_id] = Role.SIEGE if phase == StrategyPhase.CORE_SIEGE else Role.RAIDER
+    return result

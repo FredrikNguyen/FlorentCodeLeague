@@ -31,6 +31,13 @@ class CandidateCoreCombatTest(unittest.TestCase):
         self.assertGreaterEqual(controller.resources, 0)
         self.assertIsNotNone(state)
 
+    def test_standing_ammo_conversion_is_suppressed_before_route_gate(self) -> None:
+        controller = FakeController(entity_type=EntityType.CORE, position=Position(1, 1))
+        controller.entities[2] = FakeEntity(EntityType.GUNNER, Position(2, 1), Team.A, Direction.EAST)
+        controller.resources = 500
+        run_core(controller, CoreState())
+        self.assertEqual([], [call for call in controller.calls if call[0] == "convert_ammo"])
+
     def test_no_turret_no_threat_keeps_ammo_unconverted(self) -> None:
         controller = FakeController(entity_type=EntityType.CORE)
         run_core(controller, CoreState())

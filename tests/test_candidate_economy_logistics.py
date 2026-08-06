@@ -45,8 +45,8 @@ class CandidateEconomyLogisticsTest(unittest.TestCase):
         )
         self.assertEqual(30, estimate_route_cost(10, 3))
 
-    def test_three_project_cap_and_reserve_preservation(self) -> None:
-        self.assertFalse(expansion_allowed(projected_output=1000, harvester_cost=1, route_cost=1, concurrent_projects=3))
+    def test_four_project_cap_and_reserve_preservation(self) -> None:
+        self.assertFalse(expansion_allowed(projected_output=1000, harvester_cost=1, route_cost=1, concurrent_projects=4))
         self.assertFalse(
             expansion_allowed(
                 projected_output=500,

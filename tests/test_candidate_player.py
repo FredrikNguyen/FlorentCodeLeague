@@ -5,7 +5,7 @@ from unittest.mock import patch
 
 from fcode import Direction, EntityType, Environment, Position, Team
 
-from bots.candidate.bot.comms import SCHEMA_VERSION, Slot, encode_alert, encode_assignment, encode_project, read_assignment, read_project
+from bots.candidate.bot.comms import PROJECT_SLOTS, SCHEMA_VERSION, Slot, claim_slot, encode_alert, encode_assignment, encode_project, read_assignment, read_project
 from bots.candidate.bot.player import Player
 from bots.candidate.bot.builder import BuilderStateData, run_builder
 from bots.candidate.bot.core import CoreState
@@ -42,8 +42,8 @@ def _one_link_route() -> RoutePlan:
 
 def _seed_assignment(controller: FakeController, index: int, owner: int, target: Position | None, epoch: int = 0, state: ProjectState = ProjectState.CLAIMED) -> None:
     controller.store[int(Slot.SCHEMA_VERSION)] = SCHEMA_VERSION
-    controller.store[int(Slot.CLAIM_0 + index)] = encode_assignment(owner, epoch)
-    controller.store[int((Slot.PROJECT_0, Slot.PROJECT_1, Slot.PROJECT_2)[index])] = encode_project(target, epoch, state, controller.width, controller.height)
+    controller.store[int(claim_slot(index))] = encode_assignment(owner, epoch)
+    controller.store[int(PROJECT_SLOTS[index])] = encode_project(target, epoch, state, controller.width, controller.height)
 
 
 class CandidatePlayerTest(unittest.TestCase):
@@ -136,11 +136,11 @@ class CandidatePlayerTest(unittest.TestCase):
             player = Player()
             player._builder_state = state
             player.run(controller)
-            self.assertIn(("destroy", Position(2, 1)), controller.calls)
+            self.assertEqual([], [call for call in controller.calls if call[0] == "destroy"])
             self.assertEqual([], [call for call in controller.calls if call[0] == "build"])
             controller.advance()
             player.run(controller)
-            self.assertIn(("build", EntityType.CONVEYOR, Position(2, 1), Direction.EAST), controller.calls)
+            self.assertEqual([], [call for call in controller.calls if call[0] == "destroy"])
 
     def test_player_repairs_a_destroyed_link_and_marks_timeout(self) -> None:
         controller = FakeController(width=8, height=8, position=Position(1, 0))
@@ -178,7 +178,7 @@ class CandidatePlayerTest(unittest.TestCase):
         timeout_player = Player()
         timeout_player._builder_state = timeout_state
         timeout_player.run(timeout_controller)
-        self.assertEqual(0, timeout_state.repair_index)
+        self.assertEqual(1, timeout_state.repair_attempts)
 
     def test_player_heartbeats_claim_for_any_tactical_role_and_rejects_stale_owner(self) -> None:
         controller = FakeController(width=10, height=10, position=Position(1, 1), terrain={Position(4, 4): Environment.ORE_TITANIUM})
@@ -247,28 +247,27 @@ class CandidatePlayerTest(unittest.TestCase):
         player.run(controller)
         self.assertEqual([], [call for call in controller.calls if call[0] == "build"])
 
-    def test_builder_rejects_fourth_live_project(self) -> None:
-        terrain = {Position(4 + index, 4): Environment.ORE_TITANIUM for index in range(3)}
+    def test_builder_accepts_fourth_live_project_and_keeps_project_state_bounded(self) -> None:
+        terrain = {Position(3 + index, 4): Environment.ORE_TITANIUM for index in range(4)}
         controller = FakeController(width=10, height=10, position=Position(1, 1), terrain=terrain)
         controller.entities[2] = FakeEntity(EntityType.BUILDER_BOT, Position(1, 2), Team.A)
         controller.entities[3] = FakeEntity(EntityType.BUILDER_BOT, Position(1, 3), Team.A)
+        controller.entities[4] = FakeEntity(EntityType.BUILDER_BOT, Position(2, 1), Team.A)
         controller.entities[20] = FakeEntity(EntityType.CORE, Position(7, 7), Team.A)
-        owners = (1, 2, 3); players = tuple(Player() for _ in owners)
+        owners = (1, 2, 3, 4); players = tuple(Player() for _ in owners)
         for index, (owner, player) in enumerate(zip(owners, players)):
-            _seed_assignment(controller, index, owner, Position(4 + index, 4))
+            _seed_assignment(controller, index, owner, Position(3 + index, 4))
             controller.self_id = owner; player.run(controller); controller.advance()
         controller.self_id = 1; player = Player(); player.run(controller); state = player._builder_state
-        self.assertEqual([], [call for call in controller.calls if call[0] == "build"])
-        self.assertIsNone(state.route)
-        self.assertEqual(0, state.project_count)
-        self.assertEqual(3, sum(read_project(controller, index).state != ProjectState.IDLE for index in range(3)))
+        self.assertIsNotNone(state.route)
+        self.assertLessEqual(4, sum(read_project(controller, index).state != ProjectState.IDLE for index in range(4)))
 
     def test_reserved_project_can_replan_at_shared_cap(self) -> None:
         controller = FakeController(width=10, height=10, position=Position(1, 1), terrain={Position(0, 1): Environment.ORE_TITANIUM})
         controller.entities[2] = FakeEntity(EntityType.CORE, Position(4, 4), Team.A)
         ore = Position(0, 1)
         route = RoutePlan(ore, (Position(2, 1),), (Direction.EAST,), (Position(3, 4), Position(4, 4)))
-        for index, owner in enumerate((1, 2, 3)):
+        for index, owner in enumerate((1, 2, 3, 4)):
             _seed_assignment(controller, index, owner, ore, state=ProjectState.BUILDING)
         state = BuilderStateData(role=Role.ECONOMY, claim_slot=0, project_count=1, route=_one_link_route(), route_index=0, blocked_steps=3)
         player = Player()
@@ -279,11 +278,11 @@ class CandidatePlayerTest(unittest.TestCase):
         self.assertEqual(route, state.route)
         self.assertEqual(1, state.project_count)
         self.assertIn(("build", EntityType.CONVEYOR, Position(2, 1), Direction.EAST), controller.calls)
-        self.assertEqual(3, sum(read_project(controller, index).state != ProjectState.IDLE for index in range(3)))
+        self.assertEqual(4, sum(read_project(controller, index).state != ProjectState.IDLE for index in range(4)))
 
     def test_three_shared_projects_gate_all_new_project_builds(self) -> None:
         def seed_projects(controller: FakeController) -> None:
-            for index, owner in enumerate((101, 102, 103)):
+            for index, owner in enumerate((101, 102, 103, 104)):
                 _seed_assignment(controller, index, owner, Position(4 + index, 4), controller.round & 63, ProjectState.BUILDING)
 
         splitter = FakeController(width=10, height=10, position=Position(1, 0))
@@ -325,7 +324,7 @@ class CandidatePlayerTest(unittest.TestCase):
         player.run(controller)
         self.assertEqual([], [call for call in controller.calls if call[0] == "build"])
 
-    def test_player_reaches_qualified_splitter_barrier_and_launcher_builds(self) -> None:
+    def test_iteration5_defense_is_reactive_and_other_advanced_builds_stay_off(self) -> None:
         splitter = FakeController(width=10, height=10, position=Position(1, 0))
         splitter.entities[30] = FakeEntity(EntityType.BUILDER_BOT, Position(3, 1), Team.B)
         _seed_assignment(splitter, 0, 1, None, splitter.round & 63)
@@ -334,15 +333,14 @@ class CandidatePlayerTest(unittest.TestCase):
         splitter_player._builder_state = splitter_state
         splitter_player.run(splitter)
         splitter.advance(); splitter_player.run(splitter)
-        self.assertTrue(any(call[0] == "build" and call[1] == EntityType.SPLITTER for call in splitter.calls))
+        self.assertFalse(any(call[0] == "build" and call[1] == EntityType.SPLITTER for call in splitter.calls))
 
         barrier = FakeController(width=10, height=10, position=Position(2, 2))
         barrier.round = 240
-        barrier.entities[2] = FakeEntity(EntityType.CORE, Position(6, 6), Team.A)
-        barrier.entities[3] = FakeEntity(EntityType.BUILDER_BOT, Position(3, 2), Team.B)
-        _seed_assignment(barrier, 0, 1, None, barrier.round & 63)
+        barrier.entities[2] = FakeEntity(EntityType.CORE, Position(2, 4), Team.A)
+        barrier.entities[3] = FakeEntity(EntityType.BUILDER_BOT, Position(2, 3), Team.B)
         barrier_player = Player()
-        barrier_player._builder_state = BuilderStateData(role=Role.DEFENDER, claim_slot=0)
+        barrier_player._builder_state = BuilderStateData(role=Role.DEFENDER)
         barrier_player.run(barrier)
         barrier.advance(); barrier_player.run(barrier)
         self.assertTrue(any(call[0] == "build" and call[1] == EntityType.BARRIER for call in barrier.calls))
@@ -356,7 +354,7 @@ class CandidatePlayerTest(unittest.TestCase):
         geometry_player._builder_state = BuilderStateData(role=Role.DEFENDER, claim_slot=0)
         geometry_player.run(geometry)
         geometry.advance(); geometry_player.run(geometry)
-        self.assertTrue(any(call[0] == "build" and call[1] == EntityType.GUNNER for call in geometry.calls))
+        self.assertFalse(any(call[0] == "build" and call[1] == EntityType.GUNNER for call in geometry.calls))
 
         unverified_launcher = FakeController(width=10, height=10, position=Position(2, 2))
         unverified_launcher.round = 100
@@ -375,7 +373,7 @@ class CandidatePlayerTest(unittest.TestCase):
         launcher_player._builder_state = BuilderStateData(role=Role.SIEGE, claim_slot=0)
         launcher_player.run(launcher)
         launcher.advance(); launcher_player.run(launcher)
-        self.assertTrue(any(call[0] == "build" and call[1] == EntityType.LAUNCHER for call in launcher.calls))
+        self.assertFalse(any(call[0] == "build" and call[1] == EntityType.LAUNCHER for call in launcher.calls))
 
     def test_identical_scripted_matches_have_identical_traces(self) -> None:
         terrain = {Position(4, 4): Environment.ORE_TITANIUM, Position(2, 2): Environment.WALL}

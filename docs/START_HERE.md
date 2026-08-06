@@ -8,37 +8,37 @@
 
 | Field | Value |
 |---|---|
-| Milestone | NEXT Iteration 1: navigation/action criteria validated as separate checkpoint |
-| Current hypothesis | Active per-unit paths, legal adjacent stances, and layout-only route epochs reduce replans without changing Store or strategy policy. |
-| Current experiment | reports/iteration1-validation-20260805T2120 |
-| Next recommended task | Read and inspect NEXT_ITERATIONS_PLAN Iteration 2, then implement only the Store protocol checkpoint if its pre-edit criteria are satisfied. |
+| Milestone | Reviewer-only workflow complete; v0008 retained as baseline and platform v10 is under live observation |
+| Current hypothesis | The locally verified v0008 winner should outperform the prior v0006 snapshot; retain it as baseline while monitoring live reliability without implementing source changes. |
+| Current experiment | reports/reviewer-workflow-20260806T1202Z |
+| Next recommended task | Reviewer-only live observation of platform v10; do not change the baseline or bot source until live evidence is available. |
 | Candidate | `bots/candidate` |
-| Frozen baseline | `bots/baseline` |
-| Last Codex task | Validate NEXT_ITERATIONS_PLAN Iteration 1 navigation/action criteria already delivered by the CURRENT_PLAN checkpoint; no duplicate source edits. |
-| Last Codex outcome | PASSED: focused 34/34, make static 97/97 plus compileall, smoke 4/4, and required regression 24/24 command-clean. |
-| Last Codex report | reports/iteration1-validation-20260805T2120 |
-| Last local report | reports/local-20260805T210935Z |
+| Frozen baseline | `bots/versions/v0008_reviewer-current-best_20260806-1209_3f2505d7` |
+| Last Codex task | Reviewer-only workflow: compare current candidate and unseen ready submissions, validate only the final winner, activate it, and capture live evidence. |
+| Last Codex outcome | v0008 beat v0006 on 210 games (953940 vs 748370, ratio 1.2747, 110/210 wins); v4-v6 lost, v7 and v8 were harness-rejected for finally blocks, and v9 lost 168600 vs 174450 (0.9665). v0008 is platform v10 with v2 preserved for rollback; its first two rated series are 3-2 and 0-5. |
+| Last Codex report | reports/reviewer-workflow-20260806T1202Z |
+| Last local report | reports/local-20260806T122741Z |
 
 ## Live deployment snapshot
 
 | Field | Value |
 |---|---|
-| Phase | `idle` |
-| Active platform version | unknown |
+| Phase | `active_observing` |
+| Active platform version | 10 |
 | Pending version | unknown |
-| Previous active version | unknown |
-| Last known-good version | unknown |
+| Previous active version | 8 |
+| Last known-good version | 2 |
 | Last known-good live score | unknown |
 | Current candidate live score | unknown |
-| Last observation | unknown |
-| Last decision | unknown |
+| Last observation | 2026-08-06T13:14:35Z |
+| Last decision | observation captured |
 
 ## Working tree snapshot
 
 | Field | Value |
 |---|---|
 | Branch | `main` |
-| Commit | `2de8371f` |
+| Commit | `3f2505d7` |
 | Status | working tree has changes |
 
 Always run `git status --short` yourself; this generated snapshot may be older than the working tree.
@@ -84,4 +84,4 @@ make live-status
 make live-autopilot
 ```
 
-Generated at `2026-08-05T21:11:47Z` from project state updated `2026-08-05T21:11:38Z` and live state updated `2026-08-05T00:00:00Z`.
+Generated at `2026-08-06T13:15:48Z` from project state updated `2026-08-06T13:14:35Z` and live state updated `2026-08-06T13:14:35Z`.

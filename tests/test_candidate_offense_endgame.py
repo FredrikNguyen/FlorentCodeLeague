@@ -2,15 +2,22 @@ from __future__ import annotations
 
 import unittest
 
-from fcode import EntityType, Position, Team
+from fcode import Direction, EntityType, Position, Team
 
 from bots.candidate.bot.comms import Slot, encode_alert
 from bots.candidate.bot.offense import (
+    choose_attack_stance,
+    choose_forward_turret_site,
+    choose_forward_turret_type,
     choose_raid_action,
     choose_rally,
+    choose_offensive_target,
+    enemy_target_from_observation,
     score_ally_insertion,
     score_enemy_ejection,
     score_sabotage_target,
+    should_retreat,
+    try_builder_attack,
 )
 from bots.candidate.bot.policy import late_game_policy
 from bots.candidate.bot.player import Player
@@ -18,6 +25,35 @@ from tests.candidate_fakes import FakeEntity, FakeController
 
 
 class CandidateOffenseEndgameTest(unittest.TestCase):
+    def test_offensive_target_order_and_core_override(self) -> None:
+        targets = (
+            enemy_target_from_observation(Position(4, 4), EntityType.CORE, current_round=5, confidence=100),
+            enemy_target_from_observation(Position(2, 1), EntityType.CONVEYOR, current_round=5, confidence=90),
+            enemy_target_from_observation(Position(3, 1), EntityType.SPLITTER, current_round=5, confidence=90),
+            enemy_target_from_observation(Position(3, 2), EntityType.HARVESTER, current_round=5, confidence=90),
+        )
+        self.assertEqual(EntityType.SPLITTER, choose_offensive_target(targets, current_round=5).entity_type)
+        self.assertEqual(EntityType.CORE, choose_offensive_target(targets, current_round=5, direct_core_window=True, crippled_economy=True).entity_type)
+
+    def test_builder_uses_adjacent_building_attack_and_not_builder_attack(self) -> None:
+        controller = FakeController(entity_type=EntityType.BUILDER_BOT, position=Position(1, 1))
+        controller.entities[2] = FakeEntity(EntityType.CONVEYOR, Position(2, 1), Team.B)
+        controller.entities[3] = FakeEntity(EntityType.BUILDER_BOT, Position(1, 2), Team.B)
+        target = enemy_target_from_observation(Position(2, 1), EntityType.CONVEYOR, current_round=0, confidence=90)
+        self.assertTrue(try_builder_attack(controller, target, free_attack_titanium=5))
+        self.assertFalse(try_builder_attack(controller, enemy_target_from_observation(Position(1, 2), EntityType.BUILDER_BOT), free_attack_titanium=5))
+
+    def test_safe_stance_and_forward_site_require_positive_support(self) -> None:
+        target = enemy_target_from_observation(Position(5, 5), EntityType.CORE, current_round=0, confidence=100)
+        self.assertEqual(Position(4, 5), choose_attack_stance(Position(1, 5), target.position))
+        self.assertEqual(EntityType.SENTINEL, choose_forward_turret_type(lane_length=8))
+        self.assertIsNone(choose_forward_turret_site((Position(1, 1),), target=target, firing_lanes={}, home_reserve=100, construction_cost=20, ammo_reserve=4))
+        site = choose_forward_turret_site((Position(1, 1),), target=target, firing_lanes={(Position(1, 1), Direction.EAST): 2}, home_reserve=100, construction_cost=20, ammo_reserve=4)
+        self.assertIsNotNone(site)
+
+    def test_retreat_on_stale_or_critical_home_threat(self) -> None:
+        self.assertTrue(should_retreat(current_round=25, last_progress_round=0, target_fresh=True, attackers_remaining=2))
+        self.assertTrue(should_retreat(current_round=1, last_progress_round=0, target_fresh=True, attackers_remaining=2, home_threat_critical=True))
     def test_sabotage_ordering(self) -> None:
         self.assertGreater(score_sabotage_target(EntityType.HARVESTER), score_sabotage_target(EntityType.SPLITTER))
         self.assertGreater(score_sabotage_target(EntityType.SPLITTER), score_sabotage_target(EntityType.CONVEYOR, loaded=True))
