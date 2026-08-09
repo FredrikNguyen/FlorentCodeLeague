@@ -52,7 +52,20 @@ def plan_core_outward_route(
     obstacle_epoch: int = 0,
     search_state: dict[str, object] | None = None,
     stats: dict[str, int] | None = None,
+    reuse_direction: Callable[[Position], Direction | None] | None = None,
 ) -> RoutePlan | None:
+    """Plan an ore-to-Core Conveyor route.
+
+    With ``reuse_direction`` unset this preserves the original bounded BFS.
+    When supplied, route length remains the primary objective and the planner
+    maximizes already-correct friendly Conveyor reuse among equal-length paths.
+    A known Conveyor pointing the wrong way is skipped instead of planning
+    through it and discovering the conflict only at build time.
+
+    Reuse is implemented as a deterministic BFS tie-break, not a weighted
+    search.  Route length therefore remains shortest-path bounded and CPU cost
+    stays close to the original planner under the 10 ms per-unit ladder limit.
+    """
     footprint = tuple(sorted((cell for cell in _footprint(core_footprint) if _inside(cell, width, height)), key=lambda pos: (pos.y, pos.x)))
     if not footprint or not _inside(ore, width, height): return None
     blocked_set = set(footprint)
@@ -75,13 +88,8 @@ def plan_core_outward_route(
     starts = ordered_adjacent((ore,))
     exits = ordered_adjacent(footprint)
     state = search_state if search_state is not None else {}
-    signature = (ore, footprint, int(width), int(height), int(obstacle_epoch))
-    if state.get("signature") != signature:
-        state.clear(); state.update({"signature": signature, "queue": deque(exits), "parents": {position: None for position in exits}, "starts": frozenset(starts), "blocked": is_blocked, "complete": False, "created_round": int(created_round)})
-    if stats is not None:
-        stats["expansions"] = stats["stopped_cpu"] = stats["complete"] = 0
-    if state.get("complete"):
-        return None
+    mode = 'reuse' if reuse_direction is not None else 'bfs'
+    signature = (ore, footprint, int(width), int(height), int(obstacle_epoch), mode)
 
     def planning_is_safe() -> bool:
         if cpu_check is None: return True
@@ -90,36 +98,139 @@ def plan_core_outward_route(
             return value if isinstance(value, bool) else int(value) < 7000
         except Exception: return True
 
-    queue = state["queue"]
-    parents = state["parents"]
-    starts_set = state["starts"]
-    blocked_fn = state["blocked"]
-    expansions = int(state.get("expansions", 0))
+    if stats is not None:
+        stats['expansions'] = stats['stopped_cpu'] = stats['complete'] = 0
+        stats['reused_links'] = 0
+
+    if reuse_direction is not None:
+        if state.get('signature') != signature:
+            footprint_set = set(footprint)
+            reusable_exits: list[Position] = []
+            ordinary_exits: list[Position] = []
+            for position in exits:
+                known = reuse_direction(position)
+                if known is not None:
+                    if position.add(known) not in footprint_set:
+                        # A known Conveyor at a Core exit flowing the wrong way
+                        # cannot be part of this route without destructive churn.
+                        continue
+                    reusable_exits.append(position)
+                else:
+                    ordinary_exits.append(position)
+            ordered_exits = tuple(reusable_exits + ordinary_exits)
+            state.clear(); state.update({
+                'signature': signature,
+                'queue': deque(ordered_exits),
+                'parents': {position: None for position in ordered_exits},
+                'starts': frozenset(starts),
+                'blocked': is_blocked,
+                'reuse_direction': reuse_direction,
+                'complete': False,
+                'created_round': int(created_round),
+                'expansions': 0,
+            })
+        if state.get('complete'):
+            return None
+
+        queue = state['queue']
+        parents = state['parents']
+        starts_set = state['starts']
+        blocked_fn = state['blocked']
+        reuse_fn = state['reuse_direction']
+        expansions = int(state.get('expansions', 0))
+        while queue and expansions < width * height:
+            if cpu_check is not None and not planning_is_safe():
+                state['expansions'] = expansions
+                if stats is not None: stats['stopped_cpu'] = 1
+                return None
+            current = queue.popleft()
+            expansions += 1
+            if stats is not None: stats['expansions'] = int(stats.get('expansions', 0)) + 1
+            if current in starts_set:
+                cells_reversed = [current]
+                while parents[cells_reversed[-1]] is not None:
+                    cells_reversed.append(parents[cells_reversed[-1]])
+                cells = tuple(cells_reversed)
+                directions = directions_for_route(cells, footprint)
+                if directions:
+                    state['complete'] = True
+                    state['expansions'] = expansions
+                    if stats is not None:
+                        stats['complete'] = 1
+                        stats['reused_links'] = sum(
+                            reuse_fn(cell) == direction
+                            for cell, direction in zip(cells, directions)
+                        )
+                    return RoutePlan(
+                        ore=ore,
+                        cells=cells,
+                        directions=directions,
+                        core_footprint=footprint,
+                        status=RouteStatus.PLANNED,
+                        created_round=int(state.get('created_round', created_round)),
+                        expected_output=10,
+                    )
+
+            # Normal BFS still determines distance.  Among cells discovered at
+            # the same distance, enqueue already-correct friendly Conveyors first.
+            # This is much cheaper than heap/Dijkstra while giving later routes a
+            # strong tendency to collapse onto existing trunks.
+            reused: list[Position] = []
+            fresh: list[Position] = []
+            for direction in CARDINALS:
+                neighbour = current.add(direction)
+                if not _inside(neighbour, width, height) or neighbour in parents or blocked_fn(neighbour):
+                    continue
+                known = reuse_fn(neighbour)
+                if known is not None:
+                    if neighbour.add(known) != current:
+                        continue
+                    reused.append(neighbour)
+                else:
+                    fresh.append(neighbour)
+            for neighbour in reused + fresh:
+                parents[neighbour] = current
+                queue.append(neighbour)
+        state['complete'] = True
+        state['expansions'] = expansions
+        if stats is not None: stats['complete'] = 1
+        return None
+
+    if state.get('signature') != signature:
+        state.clear(); state.update({'signature': signature, 'queue': deque(exits), 'parents': {position: None for position in exits}, 'starts': frozenset(starts), 'blocked': is_blocked, 'complete': False, 'created_round': int(created_round)})
+    if state.get('complete'):
+        return None
+
+    queue = state['queue']
+    parents = state['parents']
+    starts_set = state['starts']
+    blocked_fn = state['blocked']
+    expansions = int(state.get('expansions', 0))
     while queue and expansions < width * height:
         if cpu_check is not None and not planning_is_safe():
-            state["expansions"] = expansions
-            if stats is not None: stats["stopped_cpu"] = 1
+            state['expansions'] = expansions
+            if stats is not None: stats['stopped_cpu'] = 1
             return None
         current = queue.popleft()
         expansions += 1
-        if stats is not None: stats["expansions"] = int(stats.get("expansions", 0)) + 1
+        if stats is not None: stats['expansions'] = int(stats.get('expansions', 0)) + 1
         if current in starts_set:
             cells_reversed = [current]
             while parents[cells_reversed[-1]] is not None: cells_reversed.append(parents[cells_reversed[-1]])
             cells = tuple(cells_reversed)
             directions = directions_for_route(cells, footprint)
             if directions:
-                state["complete"] = True
-                state["expansions"] = expansions
+                state['complete'] = True
+                state['expansions'] = expansions
                 if stats is not None:
-                    stats["complete"] = 1
+                    stats['complete'] = 1
                 return RoutePlan(
                     ore=ore,
                     cells=cells,
                     directions=directions,
                     core_footprint=footprint,
                     status=RouteStatus.PLANNED,
-                    created_round=int(state.get("created_round", created_round)),
+                    created_round=int(state.get('created_round', created_round)),
                     expected_output=10,
                 )
         for direction in CARDINALS:
@@ -128,10 +239,10 @@ def plan_core_outward_route(
                 continue
             parents[neighbour] = current
             queue.append(neighbour)
-    state["complete"] = True
-    state["expansions"] = expansions
+    state['complete'] = True
+    state['expansions'] = expansions
     if stats is not None:
-        stats["complete"] = 1
+        stats['complete'] = 1
     return None
 
 

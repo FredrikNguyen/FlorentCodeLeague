@@ -1,208 +1,291 @@
 from __future__ import annotations
 
+from dataclasses import dataclass
 from enum import IntEnum
 from fcode import Position
-from .types import Assignment, Budget, Opening, Phase, Project, ProjectState, StrategyPhase, Threat, ThreatKind, ThreatReport
+from .types import Budget, Claim, Opening, Phase, Scenario, Threat, ThreatKind
 
 
 class Slot(IntEnum):
-    SCHEMA_VERSION = 0; STRATEGY = 1; PROJECT_0 = 2; ENEMY_CORE = 3; PROJECT_2 = 4; PROJECT_1 = 5; DESIRED_BUILDERS = 6; AMMO_TARGET = 7; DEFENSE_ALERT = 8; RALLY = 9; CLAIM_0 = 10; CLAIM_1 = 11; CLAIM_2 = 12; PROJECT_3 = 13; DIAGNOSTICS = 14; CLAIM_3 = 15
-    PRIMARY_ORE = PROJECT_0; LOGISTICS = PROJECT_1; THREAT = PROJECT_2; RESERVED = DIAGNOSTICS
+    SCHEMA_VERSION = 0; STRATEGY = 1; PRIMARY_ORE = 2; ENEMY_CORE = 3; THREAT = 4; LOGISTICS = 5; DESIRED_BUILDERS = 6; AMMO_TARGET = 7; DEFENSE_ALERT = 8; RALLY = 9; CLAIM_0 = 10; CLAIM_1 = 11; CLAIM_2 = 12; BUDGET = 13; CLAIM_3 = 14; EPOCH = 15
 
 
-SCHEMA_VERSION = 4; PROJECT_COUNT = 4; UNKNOWN = 0; COORD_BITS = 10; EPOCH_BITS = 6; STATE_BITS = 3; OWNER_BITS = 16; COORD_MASK = (1 << COORD_BITS) - 1; EPOCH_MASK = (1 << EPOCH_BITS) - 1; STATE_MASK = (1 << STATE_BITS) - 1; OWNER_MASK = (1 << OWNER_BITS) - 1; MAX_U32 = 0xFFFFFFFF
-PROJECT_SLOTS = (Slot.PROJECT_0, Slot.PROJECT_1, Slot.PROJECT_2, Slot.PROJECT_3); CLAIM_SLOTS = (Slot.CLAIM_0, Slot.CLAIM_1, Slot.CLAIM_2, Slot.CLAIM_3)
-PROJECT_STATES = tuple(ProjectState); PROJECT_STATE_INDEX = {state: index for index, state in enumerate(PROJECT_STATES)}
-SLOT_OWNER = {slot: "core" for slot in Slot}
-for _index, _slot in enumerate(PROJECT_SLOTS): SLOT_OWNER[_slot] = _index
-SLOT_OWNER.update({Slot.ENEMY_CORE: "scout", Slot.RALLY: "scout", Slot.DEFENSE_ALERT: "defender", Slot.DIAGNOSTICS: "core"})
+SCHEMA_VERSION = 15; UNKNOWN = 0; COORD_BITS = 10; EPOCH_BITS = 6; OWNER_BITS = 16; COORD_MASK = 1023; EPOCH_MASK = 63; OWNER_MASK = 65535; MAX_U32 = 0xFFFFFFFF
+CORE_SLOTS = frozenset({Slot.SCHEMA_VERSION, Slot.STRATEGY, Slot.DESIRED_BUILDERS, Slot.AMMO_TARGET, Slot.BUDGET, Slot.EPOCH})
+CLAIM_OWNER_SLOTS = {0: frozenset({Slot.PRIMARY_ORE, Slot.CLAIM_0}), 1: frozenset({Slot.LOGISTICS, Slot.CLAIM_1}), 2: frozenset({Slot.THREAT, Slot.CLAIM_2}), 3: frozenset({Slot.ENEMY_CORE, Slot.CLAIM_3})}
+SLOT_OWNER = {slot: "core" for slot in CORE_SLOTS}
+for _owner, _slots in CLAIM_OWNER_SLOTS.items():
+    for _slot in _slots: SLOT_OWNER[_slot] = _owner
 
 
-def _valid(pos: Position, width: int, height: int | None = None) -> bool: return isinstance(pos, Position) and width > 0 and pos.x >= 0 and pos.y >= 0 and pos.x < width and (height is None or pos.y < height)
-def _number(value: object) -> bool: return isinstance(value, int) and not isinstance(value, bool)
-def _store(ct: object, slot: Slot) -> int | None:
-    try: return int(ct.read_store(int(slot)))
-    except Exception: return None
-def _write(ct: object, slot: Slot, value: int) -> bool:
-    try: ct.write_store(int(slot), value); return True
-    except Exception: return False
+def _valid(pos: Position, width: int, height: int | None = None) -> bool:
+    return width > 0 and pos.x >= 0 and pos.y >= 0 and pos.x < width and (height is None or pos.y < height)
 
 
 def pack_position(pos: Position, width: int, height: int | None = None) -> int:
     if not _valid(pos, width, height): raise ValueError("position outside map")
-    value = 1 + pos.y * width + pos.x; return value if value <= COORD_MASK else (_ for _ in ()).throw(ValueError("position does not fit ten-bit coordinate"))
+    value = 1 + pos.y * width + pos.x
+    if value > COORD_MASK: raise ValueError("position does not fit ten-bit coordinate")
+    return value
 
 
 def unpack_position(value: int, width: int, height: int | None = None) -> Position | None:
-    if not _number(value) or not 1 <= value <= COORD_MASK or width <= 0: return None
-    position = Position((value - 1) % width, (value - 1) // width); return position if _valid(position, width, height) else None
+    if isinstance(value, bool) or not isinstance(value, int) or not 1 <= value <= COORD_MASK or width <= 0: return None
+    position = Position((value - 1) % width, (value - 1) // width)
+    return position if _valid(position, width, height) else None
 
 
-pack_epoch = lambda epoch: epoch if _number(epoch) and 0 <= epoch <= EPOCH_MASK else (_ for _ in ()).throw(ValueError("epoch must be a six-bit integer"))
+def pack_epoch(epoch: int) -> int:
+    if isinstance(epoch, bool) or not isinstance(epoch, int): raise ValueError("epoch must be an integer")
+    return epoch & EPOCH_MASK
 
 
-epoch_distance = lambda now, then: (int(now) - int(then)) & EPOCH_MASK
-assignment_is_fresh = lambda assignment, now_epoch: assignment is not None and assignment.owner_id > 0 and epoch_distance(now_epoch, assignment.generation) <= 31
+def epoch_distance(now: int, then: int) -> int: return (int(now) - int(then)) & EPOCH_MASK
+def claim_is_fresh(claim: Claim | None, now_epoch: int) -> bool:
+    # Live route owners refresh every four rounds. A 15-round lease replaces a
+    # destroyed or permanently faulting owner much faster than the old 31-round
+    # half-epoch timeout while remaining tolerant of transient missed turns.
+    return (
+        claim is not None
+        and claim.owner_id > 0
+        and epoch_distance(now_epoch, claim.epoch) <= 15
+    )
 
 
-def encode_assignment(owner_id: int, generation: int) -> int:
-    if not _number(owner_id) or not 0 < owner_id <= OWNER_MASK: raise ValueError("owner id does not fit codec")
-    return (pack_epoch(generation) << OWNER_BITS) | owner_id
-
-
-def decode_assignment(value: int) -> Assignment | None:
-    if not _number(value) or not 0 < value <= (EPOCH_MASK << OWNER_BITS) | OWNER_MASK: return None
-    return Assignment(value & OWNER_MASK, (value >> OWNER_BITS) & EPOCH_MASK)
-
-
-def _slot(owner_index: int, slots: tuple[Slot, ...]) -> Slot:
-    if not isinstance(owner_index, int) or isinstance(owner_index, bool) or not 0 <= owner_index < PROJECT_COUNT: raise ValueError("slot owner is outside the project range")
-    return slots[owner_index]
-def claim_slot(owner_index: int) -> Slot: return _slot(owner_index, CLAIM_SLOTS)
-def project_slot(owner_index: int) -> Slot: return _slot(owner_index, PROJECT_SLOTS)
-
-
-def slot_owner(slot: int | Slot) -> str | int | None: return SLOT_OWNER.get(Slot(slot)) if _number(slot) and 0 <= int(slot) < 16 else None
-
-
-can_write = lambda slot, writer: (owner := slot_owner(slot)) is not None and owner == writer
-
-
-def _schema_ok(ct: object) -> bool:
-    return _store(ct, Slot.SCHEMA_VERSION) in (0, SCHEMA_VERSION)
-
-
-def read_assignment(ct: object, index: int) -> Assignment | None:
-    if not isinstance(index, int) or isinstance(index, bool) or not 0 <= index < PROJECT_COUNT or not _schema_ok(ct): return None
-    return decode_assignment(_store(ct, claim_slot(index)) or 0)
-
-
-def write_assignment(ct: object, index: int, owner_id: int | None, generation: int, *, writer: str | int = "core") -> bool:
-    try: slot = claim_slot(index)
-    except Exception: return False
-    return _schema_ok(ct) and can_write(slot, writer) and _write(ct, slot, 0 if owner_id is None else encode_assignment(owner_id, generation))
-
-
-def encode_project(position: Position | None, epoch: int, project_state: ProjectState | int, width: int, height: int | None = None) -> int:
+def pack_claim(position: Position | None, width: int, epoch: int, owner_id: int, height: int | None = None) -> int:
+    if isinstance(owner_id, bool) or not isinstance(owner_id, int) or not 0 <= owner_id <= OWNER_MASK: raise ValueError("owner id does not fit codec")
     coordinate = 0 if position is None else pack_position(position, width, height)
-    state_index = int(project_state) if isinstance(project_state, int) and not isinstance(project_state, bool) else PROJECT_STATE_INDEX.get(project_state, -1)
-    if not 0 <= state_index < len(PROJECT_STATES): raise ValueError("project state is invalid")
-    return coordinate | (pack_epoch(epoch) << COORD_BITS) | (state_index << (COORD_BITS + EPOCH_BITS))
+    return (coordinate << 22) | (pack_epoch(epoch) << 16) | owner_id
 
 
-def decode_project(value: int, width: int, height: int | None = None) -> Project | None:
-    if not _number(value) or not 0 <= value <= MAX_U32: return None
-    coordinate, epoch, state_value = value & COORD_MASK, (value >> COORD_BITS) & EPOCH_MASK, (value >> (COORD_BITS + EPOCH_BITS)) & STATE_MASK
-    state = PROJECT_STATES[state_value]
-    position = None if coordinate == 0 else unpack_position(coordinate, width, height); return None if coordinate and position is None else Project(position, epoch, state)
+def unpack_claim(value: int, width: int, height: int | None = None) -> Claim | None:
+    if isinstance(value, bool) or not isinstance(value, int) or not 0 < value <= MAX_U32: return None
+    coordinate, epoch, owner = (value >> 22) & COORD_MASK, (value >> 16) & EPOCH_MASK, value & OWNER_MASK
+    if owner == 0: return None
+    position = None if coordinate == 0 else unpack_position(coordinate, width, height)
+    return None if coordinate and position is None else Claim(position, epoch, owner)
 
 
-def read_project(ct: object, index: int) -> Project | None:
-    if not isinstance(index, int) or isinstance(index, bool) or not 0 <= index < PROJECT_COUNT or not _schema_ok(ct): return None
-    value = _store(ct, project_slot(index))
-    if value is None: return None
-    try: return decode_project(value, int(ct.get_map_width()), int(ct.get_map_height()))
-    except Exception: return None
+def claim_slot(owner_index: int) -> Slot:
+    try:
+        return (Slot.CLAIM_0, Slot.CLAIM_1, Slot.CLAIM_2, Slot.CLAIM_3)[owner_index]
+    except (IndexError, TypeError):
+        raise ValueError("claim owner must be 0, 1, 2, or 3") from None
 
 
-def write_project(ct: object, index: int, position: Position | None, epoch: int, project_state: ProjectState | int, width: int, height: int | None = None, *, writer: str | int | None = None) -> bool:
-    try: slot = project_slot(index)
-    except Exception: return False
-    writer = index if writer is None else writer
-    return _schema_ok(ct) and can_write(slot, writer) and _write(ct, slot, encode_project(position, epoch, project_state, width, height))
+def slot_owner(slot: int | Slot) -> str | int | None:
+    try: return SLOT_OWNER.get(Slot(slot))
+    except (TypeError, ValueError): return None
 
 
-def encode_strategy(phase: Phase, opening: Opening) -> int: return tuple(Phase).index(phase) | (tuple(Opening).index(opening) << 4)
+def can_write(slot: int | Slot, writer: str | int) -> bool: return (owner := slot_owner(slot)) is not None and owner == writer
+
+
+@dataclass(frozen=True, slots=True)
+class TeamStatus:
+    """Compressed Core-authored team snapshot carried in STRATEGY high bits.
+
+    The low twelve bits remain the existing phase/opening/scenario codec.  The
+    upper twenty bits are intentionally single-writer and one-round delayed,
+    matching Store semantics while giving every Builder the same macro picture.
+    """
+
+    route_target: int = 0
+    route_capacity: int = 0
+    maintaining_routes: int = 0
+    active_projects: int = 0
+    defense_severity: int = 0
+    attack_priority: int = 0
+
+
+def encode_strategy(
+    phase: Phase,
+    opening: Opening,
+    scenario: Scenario = Scenario.STANDARD,
+    *,
+    route_target: int = 0,
+    route_capacity: int = 0,
+    maintaining_routes: int = 0,
+    active_projects: int = 0,
+    defense_severity: int = 0,
+    attack_priority: int = 0,
+) -> int:
+    value = (
+        tuple(Phase).index(phase)
+        | (tuple(Opening).index(opening) << 4)
+        | (tuple(Scenario).index(scenario) << 8)
+    )
+    value |= (max(0, min(7, int(route_target))) & 7) << 12
+    value |= (max(0, min(7, int(route_capacity))) & 7) << 15
+    value |= (max(0, min(7, int(maintaining_routes))) & 7) << 18
+    value |= (max(0, min(7, int(active_projects))) & 7) << 21
+    value |= (max(0, min(15, int(defense_severity))) & 15) << 24
+    value |= (max(0, min(15, int(attack_priority))) & 15) << 28
+    return value
+
+
+def decode_team_status(value: int) -> TeamStatus:
+    if isinstance(value, bool) or not isinstance(value, int) or value < 0:
+        return TeamStatus()
+    return TeamStatus(
+        route_target=(value >> 12) & 7,
+        route_capacity=(value >> 15) & 7,
+        maintaining_routes=(value >> 18) & 7,
+        active_projects=(value >> 21) & 7,
+        defense_severity=(value >> 24) & 15,
+        attack_priority=(value >> 28) & 15,
+    )
+
+@dataclass(frozen=True, slots=True)
+class TeamPulse:
+    """Core-authored progress/congestion pulse packed into the EPOCH slot.
+
+    Low six bits remain the ordinary round epoch.  The upper bits are a
+    single-writer delayed snapshot used only for coordination; legacy epoch
+    readers can continue masking with 63.
+    """
+
+    epoch: int = 0
+    route_progress_age: int = 0
+    core_congestion: int = 0
+
+
+def encode_epoch_pulse(
+    epoch: int,
+    *,
+    route_progress_age: int = 0,
+    core_congestion: int = 0,
+) -> int:
+    return (
+        (int(epoch) & EPOCH_MASK)
+        | ((max(0, min(63, int(route_progress_age))) & 63) << 6)
+        | ((max(0, min(15, int(core_congestion))) & 15) << 12)
+    )
+
+
+def decode_epoch_pulse(value: int) -> TeamPulse:
+    if isinstance(value, bool) or not isinstance(value, int) or value < 0:
+        return TeamPulse()
+    return TeamPulse(
+        epoch=value & EPOCH_MASK,
+        route_progress_age=(value >> 6) & 63,
+        core_congestion=(value >> 12) & 15,
+    )
 
 
 def decode_strategy(value: int) -> tuple[Phase, Opening] | None:
-    if not _number(value) or value < 0: return None
-    phases, openings = tuple(Phase), tuple(Opening); return (phases[value & 15], openings[(value >> 4) & 15]) if (value & 15) < len(phases) and ((value >> 4) & 15) < len(openings) else None
+    if isinstance(value, bool) or not isinstance(value, int) or value < 0: return None
+    try: return tuple(Phase)[value & 15], tuple(Opening)[(value >> 4) & 15]
+    except IndexError: return None
 
 
-def encode_threat(threat: Threat, width: int, height: int | None = None) -> int: return pack_position(threat.position, width, height) | (tuple(ThreatKind).index(threat.kind) << COORD_BITS)
+
+
+def decode_scenario(value: int) -> Scenario:
+    if isinstance(value, bool) or not isinstance(value, int) or value < 0:
+        return Scenario.STANDARD
+    index = (value >> 8) & 15
+    try:
+        return tuple(Scenario)[index]
+    except IndexError:
+        return Scenario.STANDARD
+
+
+def encode_threat(threat: Threat, width: int, height: int | None = None) -> int: return pack_position(threat.position, width, height) | (tuple(ThreatKind).index(threat.kind) << 10)
 
 
 def decode_threat(value: int, width: int, height: int | None = None) -> Threat | None:
-    if not _number(value) or not 0 < value <= MAX_U32: return None
-    position, kind = unpack_position(value & COORD_MASK, width, height), (value >> COORD_BITS) & 15
+    if isinstance(value, bool) or not isinstance(value, int) or not 0 < value <= MAX_U32: return None
+    position, kind = unpack_position(value & COORD_MASK, width, height), (value >> 10) & 15
     return None if position is None or kind >= len(tuple(ThreatKind)) else Threat(position, tuple(ThreatKind)[kind])
 
 
-THREAT_KIND_BITS = 4
-THREAT_SEVERITY_BITS = 6
-THREAT_EXPIRY_BITS = 6
-THREAT_KIND_MASK = (1 << THREAT_KIND_BITS) - 1
-THREAT_SEVERITY_MASK = (1 << THREAT_SEVERITY_BITS) - 1
-
-
-def encode_threat_report(report: ThreatReport, width: int, height: int | None = None) -> int:
-    """Pack the shared threat payload without leaking a target object into Store."""
-    kind = tuple(ThreatKind).index(report.kind)
-    severity = max(0, min(THREAT_SEVERITY_MASK, int(report.severity)))
-    expiry = int(report.expiry_round) & EPOCH_MASK
-    return pack_position(report.position, width, height) | (kind << COORD_BITS) | (severity << (COORD_BITS + THREAT_KIND_BITS)) | (expiry << (COORD_BITS + THREAT_KIND_BITS + THREAT_SEVERITY_BITS))
-
-
-def decode_threat_report(value: int, width: int, height: int | None = None) -> ThreatReport | None:
-    if not _number(value) or not 0 < value <= MAX_U32:
-        return None
-    position = unpack_position(value & COORD_MASK, width, height)
-    kind_value = (value >> COORD_BITS) & THREAT_KIND_MASK
-    if position is None or kind_value >= len(tuple(ThreatKind)):
-        return None
-    severity = (value >> (COORD_BITS + THREAT_KIND_BITS)) & THREAT_SEVERITY_MASK
-    expiry = (value >> (COORD_BITS + THREAT_KIND_BITS + THREAT_SEVERITY_BITS)) & EPOCH_MASK
-    return ThreatReport(tuple(ThreatKind)[kind_value], position, severity=severity, expiry_round=expiry)
-
-
-def read_shared_threat(ct: object, *, current_round: int | None = None) -> ThreatReport | None:
-    try:
-        value = _store(ct, Slot.DEFENSE_ALERT)
-        report = decode_threat_report(value or 0, int(ct.get_map_width()), int(ct.get_map_height()))
-        now = int(ct.get_current_round() if current_round is None else current_round)
-    except Exception:
-        return None
-    if report is None or epoch_distance(report.expiry_round, now & EPOCH_MASK) > 32:
-        return None
-    return report
-
-
-def write_shared_threat(ct: object, report: ThreatReport | None, *, writer: str = "defender") -> bool:
-    if not can_write(Slot.DEFENSE_ALERT, writer):
-        return False
-    if report is None:
-        return _write(ct, Slot.DEFENSE_ALERT, 0)
-    try:
-        return _write(ct, Slot.DEFENSE_ALERT, encode_threat_report(report, int(ct.get_map_width()), int(ct.get_map_height())))
-    except Exception:
-        return False
-
-
-def encode_global_strategy(strategy: StrategyPhase, phase: Phase, opening: Opening) -> int:
-    """Extend the existing strategy word while preserving its low bits."""
-    return encode_strategy(phase, opening) | (tuple(StrategyPhase).index(strategy) << 8)
-
-
-def decode_global_strategy(value: int) -> tuple[StrategyPhase, Phase, Opening] | None:
-    if not _number(value) or value < 0:
-        return None
-    decoded = decode_strategy(value & 0xFF)
-    index = (value >> 8) & 0xF
-    return None if decoded is None or index >= len(tuple(StrategyPhase)) else (tuple(StrategyPhase)[index], decoded[0], decoded[1])
-
-
 def encode_budget(budget: Budget) -> int:
-    return sum(max(0, min(63, int(value // 10))) << index * 6 for index, value in enumerate((budget.construction, budget.defense, budget.ammo, budget.expansion, budget.liquidity)))
+    encoded = 0
+    for index, value in enumerate((budget.construction, budget.defense, budget.ammo, budget.expansion, budget.liquidity)): encoded |= max(0, min(63, int(value // 10))) << index * 6
+    return encoded
 
 
 def decode_budget(value: int) -> Budget | None:
-    if not _number(value) or not 0 <= value <= MAX_U32: return None
+    if isinstance(value, bool) or not isinstance(value, int) or not 0 <= value <= MAX_U32: return None
     return Budget(*(((value >> index * 6) & 63) * 10 for index in range(5)))
 
 
-def encode_alert(position: Position | None, width: int, expires_epoch: int = 0) -> int: return (0 if position is None else pack_position(position, width)) | ((int(expires_epoch) & EPOCH_MASK) << COORD_BITS)
+def encode_alert(position: Position | None, width: int, expires_epoch: int = 0) -> int: return (0 if position is None else pack_position(position, width)) | ((expires_epoch & EPOCH_MASK) << 10)
 
 
 def decode_alert(value: int, width: int, height: int | None = None) -> tuple[Position | None, int] | None:
-    return (lambda coordinate, position: None if coordinate and position is None else (position, (value >> COORD_BITS) & EPOCH_MASK))(value & COORD_MASK, unpack_position(value & COORD_MASK, width, height) if value & COORD_MASK else None) if _number(value) and 0 <= value <= MAX_U32 else None
+    if isinstance(value, bool) or not isinstance(value, int) or not 0 <= value <= MAX_U32: return None
+    coordinate, position = value & COORD_MASK, None
+    if coordinate: position = unpack_position(coordinate, width, height)
+    return None if coordinate and position is None else (position, (value >> 10) & EPOCH_MASK)
+
+
+def encode_defense_alert(
+    position: Position | None,
+    width: int,
+    expires_epoch: int = 0,
+    severity: int = 0,
+    kind: ThreatKind = ThreatKind.UNKNOWN,
+) -> int:
+    """Pack a backward-compatible alert with severity and threat kind.
+
+    The low 16 bits retain ``encode_alert`` so an older reader still receives a
+    valid position and expiry.  New readers use the extra metadata to distinguish
+    a harmless scout sighting from an active Core/Harvester sabotage emergency.
+    """
+    try:
+        kind_index = tuple(ThreatKind).index(kind)
+    except (TypeError, ValueError):
+        kind_index = tuple(ThreatKind).index(ThreatKind.UNKNOWN)
+    return (
+        encode_alert(position, width, expires_epoch)
+        | ((max(0, min(15, int(severity))) & 15) << 16)
+        | ((kind_index & 7) << 20)
+    )
+
+
+def decode_defense_alert(
+    value: int,
+    width: int,
+    height: int | None = None,
+) -> tuple[Position | None, int, int, ThreatKind] | None:
+    decoded = decode_alert(value, width, height)
+    if decoded is None:
+        return None
+    position, expires = decoded
+    severity = (int(value) >> 16) & 15
+    kind_index = (int(value) >> 20) & 7
+    try:
+        kind = tuple(ThreatKind)[kind_index]
+    except IndexError:
+        kind = ThreatKind.UNKNOWN
+    return position, expires, severity, kind
+
+
+def encode_rally(
+    position: Position | None,
+    width: int,
+    expires_epoch: int = 0,
+    priority: int = 0,
+) -> int:
+    """Pack an alert-compatible rally with a 4-bit objective priority.
+
+    The low 16 bits retain the original alert codec, so older readers still see
+    the position and expiry.  The priority lets scouts avoid overwriting a known
+    enemy Core with a lower-value conveyor sighting.
+    """
+    return encode_alert(position, width, expires_epoch) | ((max(0, min(15, int(priority))) & 15) << 16)
+
+
+def decode_rally(
+    value: int,
+    width: int,
+    height: int | None = None,
+) -> tuple[Position | None, int, int] | None:
+    decoded = decode_alert(value, width, height)
+    if decoded is None:
+        return None
+    position, expires = decoded
+    return position, expires, (int(value) >> 16) & 15
+

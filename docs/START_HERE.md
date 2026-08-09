@@ -8,37 +8,37 @@
 
 | Field | Value |
 |---|---|
-| Milestone | Reviewer-only workflow complete; v0008 retained as baseline and platform v10 is under live observation |
-| Current hypothesis | The locally verified v0008 winner should outperform the prior v0006 snapshot; retain it as baseline while monitoring live reliability without implementing source changes. |
-| Current experiment | reports/reviewer-workflow-20260806T1202Z |
-| Next recommended task | Reviewer-only live observation of platform v10; do not change the baseline or bot source until live evidence is available. |
+| Milestone | v0015 close-contact bootstrap defense packaged; v72 active and observing before deployment unlock |
+| Current hypothesis | On close-contact non-balanced geometries, limiting redundant pre-income emergency structures to one designated free Defender preserves first-route funding without weakening distant or post-income defense. |
+| Current experiment | experiments/v72-close-contact-bootstrap-defense.md |
+| Next recommended task | Continue deterministic observation of platform v72 to 24 series; promote it as known-good if evidence remains positive, then deploy packaged v0015 with v72 as rollback. |
 | Candidate | `bots/candidate` |
-| Frozen baseline | `bots/versions/v0008_reviewer-current-best_20260806-1209_3f2505d7` |
-| Last Codex task | Reviewer-only workflow: compare current candidate and unseen ready submissions, validate only the final winner, activate it, and capture live evidence. |
-| Last Codex outcome | v0008 beat v0006 on 210 games (953940 vs 748370, ratio 1.2747, 110/210 wins); v4-v6 lost, v7 and v8 were harness-rejected for finally blocks, and v9 lost 168600 vs 174450 (0.9665). v0008 is platform v10 with v2 preserved for rollback; its first two rated series are 3-2 and 0-5. |
-| Last Codex report | reports/reviewer-workflow-20260806T1202Z |
-| Last local report | reports/local-20260806T122741Z |
+| Frozen baseline | `bots/versions/v0015_close-contact-bootstrap-defense_20260809-1903_7dd72f03` |
+| Last Codex task | Continue evidence-based iterations toward 2000 Elo while retaining the strongest reliable live rollback. |
+| Last Codex outcome | v0015 passed a recomputed 51-39 current-pool gate, 4-1 remote gate, smoke/package/focused checks, and is frozen pending v72 live promotion at 24 series. |
+| Last Codex report | experiments/v72-close-contact-bootstrap-defense.md |
+| Last local report | reports/local-20260809T185644Z |
 
 ## Live deployment snapshot
 
 | Field | Value |
 |---|---|
 | Phase | `active_observing` |
-| Active platform version | 10 |
+| Active platform version | 73 |
 | Pending version | unknown |
-| Previous active version | 8 |
-| Last known-good version | 2 |
-| Last known-good live score | unknown |
+| Previous active version | 72 |
+| Last known-good version | 72 |
+| Last known-good live score | 0.6417 |
 | Current candidate live score | unknown |
-| Last observation | 2026-08-06T13:14:35Z |
+| Last observation | 2026-08-09T20:13:19Z |
 | Last decision | observation captured |
 
 ## Working tree snapshot
 
 | Field | Value |
 |---|---|
-| Branch | `main` |
-| Commit | `3f2505d7` |
+| Branch | `agent/publish-v10` |
+| Commit | `7dd72f03` |
 | Status | working tree has changes |
 
 Always run `git status --short` yourself; this generated snapshot may be older than the working tree.
@@ -84,4 +84,4 @@ make live-status
 make live-autopilot
 ```
 
-Generated at `2026-08-06T13:15:48Z` from project state updated `2026-08-06T13:14:35Z` and live state updated `2026-08-06T13:14:35Z`.
+Generated at `2026-08-09T20:13:19Z` from project state updated `2026-08-09T19:03:58Z` and live state updated `2026-08-09T20:13:19Z`.
