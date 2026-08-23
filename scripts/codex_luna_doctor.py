@@ -1,13 +1,11 @@
 from __future__ import annotations
 
 import argparse
-from pathlib import Path
 import json
-import os
-import re
 import shutil
+from pathlib import Path
 
-from common import ROOT, run_command, save_json, utc_run_id
+from common import ROOT, run_command
 
 STATE = ROOT / "state/codex_runtime.json"
 

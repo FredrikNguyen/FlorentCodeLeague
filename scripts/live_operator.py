@@ -1,11 +1,11 @@
 from __future__ import annotations
 
 import argparse
-from datetime import datetime, timezone
 import json
-from pathlib import Path
 import time
 import tomllib
+from datetime import UTC, datetime
+from pathlib import Path
 from typing import Any
 
 from common import ROOT, require_executable, run_command, save_json, utc_run_id
@@ -16,7 +16,7 @@ POLICY_PATH = ROOT / "configs/live_policy.toml"
 
 
 def now() -> str:
-    return datetime.now(timezone.utc).isoformat(timespec="seconds").replace("+00:00", "Z")
+    return datetime.now(UTC).isoformat(timespec="seconds").replace("+00:00", "Z")
 
 
 def load_state() -> dict:
@@ -285,7 +285,7 @@ def deploy(archive: str, name: str) -> int:
         "last_decision": "activated for observation",
     })
     save_state(state)
-    append_update("Candidate activated", [f"Version: {version}", f"Previous/rollback: {rollback_target}", f"Observation state persisted in state/live_state.json", f"Report: {report_dir.relative_to(ROOT)}"])
+    append_update("Candidate activated", [f"Version: {version}", f"Previous/rollback: {rollback_target}", "Observation state persisted in state/live_state.json", f"Report: {report_dir.relative_to(ROOT)}"])
     return 0
 
 

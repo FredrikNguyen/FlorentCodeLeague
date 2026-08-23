@@ -2,8 +2,9 @@ from __future__ import annotations
 
 import unittest
 
-from fcode import Environment, EntityType, Position
+from fcode import EntityType, Environment, Position
 
+from bots.candidate.bot.attacker import AttackerMixin
 from bots.candidate.bot.constants import (
     ECONOMY_PHASE_CONVERTING,
     ECONOMY_PHASE_CRISIS,
@@ -11,12 +12,10 @@ from bots.candidate.bot.constants import (
     ECONOMY_PHASE_PRESSURE,
     ECONOMY_STRONG_CHAINS,
     INCOME_HEARTBEAT_ROUNDS,
-    OFFENSE_MIN_HARVESTERS,
     ORE_QUEUE_LEN,
     SLOT_HARVESTER_COUNT,
     SLOT_ORE_CURSOR,
     TASK_HARVEST,
-    TASK_NONE,
     TASK_RAID,
     economy_phase_from_cursor,
     ore_cursor_from_packed,
@@ -25,7 +24,6 @@ from bots.candidate.bot.constants import (
 from bots.candidate.bot.core_role import CoreMixin
 from bots.candidate.bot.defender import DefenderMixin
 from bots.candidate.bot.dynamic import DynamicMixin
-from bots.candidate.bot.attacker import AttackerMixin
 from tests.candidate_fakes import FakeController
 
 

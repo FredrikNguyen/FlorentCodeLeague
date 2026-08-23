@@ -1,10 +1,8 @@
 from __future__ import annotations
 
 import argparse
-from pathlib import Path
 
 from common import ROOT, require_executable, run_command, save_json, utc_run_id
-
 
 DEFAULT_MAPS = ["sprint", "bridge", "crossfire", "vault", "aurora"]
 

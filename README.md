@@ -37,6 +37,7 @@ activation from packaging alone.
    make codex-doctor
    make setup-codex-v1
    make sync-maps
+   make lint
    make smoke
    make eval-regression
    make eval-local

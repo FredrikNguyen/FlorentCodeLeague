@@ -2,10 +2,9 @@ from __future__ import annotations
 
 import argparse
 import json
-from pathlib import Path
 import subprocess
 
-from common import ROOT, require_executable, utc_run_id
+from common import ROOT, require_executable
 
 
 def main() -> int:
@@ -59,7 +58,7 @@ reliability defect. Never edit bot code and never activate directly; live_operat
         "--output-last-message", str(decision_path),
         prompt,
     ]
-    proc = subprocess.run(argv, cwd=ROOT, text=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, check=False)
+    proc = subprocess.run(argv, cwd=ROOT, text=True, capture_output=True, check=False)
     jsonl_path.write_text(proc.stdout, encoding="utf-8")
     (jsonl_path.with_suffix(".jsonl.stderr")).write_text(proc.stderr, encoding="utf-8")
     if proc.returncode != 0 or not decision_path.is_file():

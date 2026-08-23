@@ -1,13 +1,13 @@
 from __future__ import annotations
 
-from datetime import datetime, timezone
-from pathlib import Path
 import hashlib
 import json
 import os
 import shutil
+from datetime import UTC, datetime
+from pathlib import Path
 
-from codex_luna_doctor import model_rows, parse_json_blob, walk
+from codex_luna_doctor import model_rows, parse_json_blob
 from common import ROOT, run_command, save_json
 
 TARGET_MODELS = {"gpt-5.6-sol", "gpt-5.6-terra", "gpt-5.6-luna"}
@@ -41,13 +41,11 @@ def main() -> int:
 
     parsed = None
     command = None
-    raw = ""
     for argv in (["codex", "debug", "models", "--json"], ["codex", "debug", "models"]):
         result = run_command(argv)
         candidate = parse_json_blob(result.stdout)
         if result.returncode == 0 and candidate is not None:
             parsed = candidate
-            raw = result.stdout
             command = argv
             break
     if parsed is None:
@@ -74,7 +72,7 @@ def main() -> int:
     codex_home = Path(os.environ.get("CODEX_HOME", Path.home() / ".codex")).expanduser().resolve()
     target_dir = codex_home / "fcl-harness"
     target_dir.mkdir(parents=True, exist_ok=True)
-    stamp = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%SZ")
+    stamp = datetime.now(UTC).strftime("%Y%m%dT%H%M%SZ")
     backup = target_dir / f"models-original-{stamp}.json"
     catalog = target_dir / "models-v1.json"
     backup.write_bytes(original)

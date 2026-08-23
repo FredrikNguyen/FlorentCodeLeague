@@ -6368,6 +6368,14 @@ Also record rating delta and opponent-adjusted residual when available. Reliabil
 
 <!-- Automation appends newest entries immediately below this comment. -->
 
+### Pinned Ruff public-readiness follow-up — 2026-08-23T08:17:09Z
+
+- Added Ruff 0.16.4 to the uv development lock and exposed `make lint`.
+- Ruff checks maintained harness and tests; immutable baseline/version and upload-shaped bot trees remain excluded from mechanical rewrites.
+- Removed unused imports and assignments, normalized import ordering and UTC usage, and simplified equivalent subprocess capture without changing bot code or live state.
+- Validation: make lint passed; make static passed 67/67 plus compileall; make doctor passed; git diff check passed.
+
+
 ### Public-readiness audit — 2026-08-23T07:56:59Z
 
 - Scope: repository hygiene, documentation, metadata, secret/history screening, deterministic checks, and Git remote parity; bot and live platform state were not changed.

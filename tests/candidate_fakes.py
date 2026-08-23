@@ -25,10 +25,12 @@ class FakeController:
         *,
         width: int = 10,
         height: int = 10,
-        position: Position = Position(1, 1),
+        position: Position | None = None,
         team: Team = Team.A,
         terrain: dict[Position, Environment] | None = None,
     ) -> None:
+        if position is None:
+            position = Position(1, 1)
         self.width, self.height = width, height
         self.round = 0
         self.resources = 500
@@ -395,4 +397,3 @@ class FakeController:
         self.round += 1
         self.cooldown = 0
         self.move_cooldown = 0
-

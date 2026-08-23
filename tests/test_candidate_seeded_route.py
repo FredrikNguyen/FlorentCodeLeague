@@ -10,7 +10,9 @@ from tests.candidate_fakes import FakeController, FakeEntity
 
 
 class SeededRouteProbe(DefenderMixin):
-    def __init__(self, seed: Position = Position(2, 1)) -> None:
+    def __init__(self, seed: Position | None = None) -> None:
+        if seed is None:
+            seed = Position(2, 1)
         self.route_seed = seed
         self.route_seed_pending = None
         self.core_pos = Position(5, 1)

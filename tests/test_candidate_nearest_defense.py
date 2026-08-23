@@ -2,33 +2,26 @@ from __future__ import annotations
 
 import unittest
 
-from fcode import Direction, EntityType, Environment, Position, Team
-
+from fcode import Direction, EntityType, Position, Team
 
 from bots.candidate.bot.attacker import AttackerMixin
 from bots.candidate.bot.constants import (
-    MODE_CHAIN,
-    MODE_SCOUT,
     DYNAMIC_ECONOMY_FLOOR,
     ECONOMY_PRIORITY_CHAINS,
-    ECONOMY_STRONG_CHAINS,
+    MODE_CHAIN,
+    MODE_SCOUT,
     OFFENSE_MIN_HARVESTERS,
     SLOT_DEFENDER_ID,
     SLOT_HARVESTER_COUNT,
     SLOT_PERMA_ATTACKER_ID,
     SLOT_PERMA_DEFENDER_ID,
-    SLOT_ORE_CURSOR,
     SLOT_SECOND_ATTACKER_ID,
     SLOT_SENTINEL_COUNT,
     TASK_ADVANCE,
     TASK_BELT_REPAIR,
     TASK_HARVEST,
-    TASK_HOME_THREAT,
-    TASK_RETIRE_GUNNER,
     TASK_RAID,
-    CHAIN_BLOCKED_LIMIT,
-    ROLE_ATTACKER,
-    ROLE_DEFENDER,
+    TASK_RETIRE_GUNNER,
 )
 from bots.candidate.bot.core_role import CoreMixin
 from bots.candidate.bot.defender import DefenderMixin

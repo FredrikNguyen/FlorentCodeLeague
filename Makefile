@@ -9,13 +9,16 @@ project-state:
 handoff:
 	$(PYTHON) scripts/build_chatgpt_bundle.py
 
-.PHONY: refresh-start project-state handoff doctor sync-maps static smoke eval-regression eval-local remote-gate live-snapshot package codex codex-doctor setup-codex-v1 verify-luna live-bootstrap live-baseline live-status live-autopilot release-live
+.PHONY: refresh-start project-state handoff doctor sync-maps lint static smoke eval-regression eval-local remote-gate live-snapshot package codex codex-doctor setup-codex-v1 verify-luna live-bootstrap live-baseline live-status live-autopilot release-live
 
 doctor:
 	$(PYTHON) scripts/doctor.py
 
 sync-maps:
 	FCODE_NO_UPDATE_CHECK=1 fcode maps sync
+
+lint:
+	uv run ruff check .
 
 static:
 	$(PYTHON) -m unittest discover -s tests -v

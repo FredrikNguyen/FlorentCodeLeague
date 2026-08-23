@@ -1,15 +1,14 @@
 from __future__ import annotations
 
 import argparse
-from datetime import datetime, timezone
 import hashlib
-from pathlib import Path
 import shutil
 import subprocess
 import zipfile
+from datetime import UTC, datetime
+from pathlib import Path
 
 from common import ROOT, save_json
-
 
 FORBIDDEN_SUFFIXES = {".so", ".dll", ".dylib", ".pyd"}
 MAX_ARCHIVE = 5 * 1024 * 1024
@@ -48,7 +47,7 @@ def main() -> int:
         raise SystemExit(f"{source} must contain main.py")
 
     sha = git_value("rev-parse", "--short=8", "HEAD")
-    stamp = datetime.now(timezone.utc).strftime("%Y%m%d-%H%M")
+    stamp = datetime.now(UTC).strftime("%Y%m%d-%H%M")
     existing = sorted((ROOT / "bots/versions").glob("v[0-9][0-9][0-9][0-9]_*"))
     number = len(existing) + 1
     version = f"v{number:04d}_{args.slug}_{stamp}_{sha}"

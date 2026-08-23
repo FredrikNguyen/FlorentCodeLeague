@@ -7,10 +7,20 @@ dependencies = [
     "fcode>=2.3.4",
 ]
 
+[dependency-groups]
+dev = [
+    "ruff==0.16.4",
+]
+
 [tool.ruff]
 target-version = "py312"
 line-length = 100
+# Submission snapshots are immutable competition artifacts. Lint the maintained
+# harness and tests without rewriting archived or upload-shaped bot source.
+extend-exclude = ["bots"]
 
 [tool.ruff.lint]
 select = ["E", "F", "I", "B", "UP", "SIM"]
-ignore = []
+# Ruff's formatter intentionally does not enforce line length. Keep long command
+# and generated-Markdown strings readable while enforcing semantic lint rules.
+ignore = ["E501"]

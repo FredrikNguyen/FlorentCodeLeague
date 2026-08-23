@@ -3,7 +3,7 @@ from __future__ import annotations
 import argparse
 import json
 
-from project_context import load_json, PROJECT_STATE_PATH, refresh_start_here, update_project_state
+from project_context import PROJECT_STATE_PATH, load_json, refresh_start_here, update_project_state
 
 
 def parse_args() -> argparse.Namespace:

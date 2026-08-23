@@ -1,10 +1,10 @@
 from __future__ import annotations
 
-from pathlib import Path
-from datetime import datetime, timezone
 import json
 import subprocess
 import zipfile
+from datetime import UTC, datetime
+from pathlib import Path
 
 from common import ROOT
 from project_context import refresh_start_here
@@ -125,7 +125,7 @@ def packet(prompt_path: Path, title: str) -> str:
 - `docs/SUBMISSION_AND_VERSIONING.md`
 - `docs/LIVE_AUTOPILOT.md`
 
-Generated at {datetime.now(timezone.utc).isoformat(timespec='seconds').replace('+00:00', 'Z')}.
+Generated at {datetime.now(UTC).isoformat(timespec='seconds').replace('+00:00', 'Z')}.
 """
 
 

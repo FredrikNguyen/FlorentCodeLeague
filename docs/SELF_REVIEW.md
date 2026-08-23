@@ -8,6 +8,8 @@
   byte-identical production trees.
 - Current unit/static checks and smoke matches are recorded in
   `docs/REPOSITORY_CLEANUP.md`.
+- `make lint` runs the pinned Ruff 0.16.4 through `uv`; maintained harness and
+  test code pass all configured semantic lint rules.
 - Generated packages, maps, replays, reports, caches, handoff packets, and Python
   package metadata are ignored rather than committed.
 - Repository history and the current tree were checked for common credential and

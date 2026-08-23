@@ -818,7 +818,7 @@
     ]
   },
   "iteration_status": "v410 rejected after 8-7 initial, 17-13 confirmation, 30-30 release gate, and 15-15 repair; exact v0047 candidate parity restored; immutable v0047 remains baseline",
-  "last_codex_outcome": "Removed stale/generated/obsolete tracked files, corrected public documentation and workflow, added contribution/security metadata, and verified tests, tooling, credentials, history, and remote parity",
+  "last_codex_outcome": "Public-readiness cleanup complete; pinned Ruff 0.16.4 through uv, corrected maintained harness/test lint findings, and verified lint, 67/67 static tests, compileall, and doctor",
   "last_codex_report": "docs/SELF_REVIEW.md",
   "last_codex_task": "Public-readiness repository audit and cleanup",
   "last_files_changed": [
@@ -4593,7 +4593,7 @@
     "Platform v108 is active_observing; live policy blocks deployment until the observation state is resolved."
   ],
   "schema_version": 1,
-  "updated_at": "2026-08-23T07:56:47Z",
+  "updated_at": "2026-08-23T08:17:09Z",
   "v390_iteration_archive": {
     "allowed_files": [
       "bots/candidate/bot/attacker.py (temporary Launcher target ranking, rolled back)",

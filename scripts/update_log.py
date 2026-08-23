@@ -1,8 +1,7 @@
 from __future__ import annotations
 
-from datetime import datetime, timezone
-from pathlib import Path
 import re
+from datetime import UTC, datetime
 
 from common import ROOT
 from project_context import refresh_start_here
@@ -12,7 +11,7 @@ MARKER = "<!-- Automation appends newest entries immediately below this comment.
 
 
 def now_utc() -> str:
-    return datetime.now(timezone.utc).isoformat(timespec="seconds").replace("+00:00", "Z")
+    return datetime.now(UTC).isoformat(timespec="seconds").replace("+00:00", "Z")
 
 
 def append_update(title: str, bullets: list[str]) -> None:

@@ -1,21 +1,21 @@
 from __future__ import annotations
 
-from dataclasses import dataclass
-from datetime import datetime, timezone
-from pathlib import Path
 import json
 import os
 import random
 import shutil
 import subprocess
-from typing import Sequence
-
+from collections.abc import Sequence
+from contextlib import suppress
+from dataclasses import dataclass
+from datetime import UTC, datetime
+from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 
 
 def utc_run_id(prefix: str) -> str:
-    stamp = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%SZ")
+    stamp = datetime.now(UTC).strftime("%Y%m%dT%H%M%SZ")
     return f"{prefix}-{stamp}"
 
 
@@ -28,10 +28,8 @@ class CommandResult:
 
     def to_dict(self) -> dict:
         parsed = None
-        try:
+        with suppress(json.JSONDecodeError):
             parsed = json.loads(self.stdout)
-        except json.JSONDecodeError:
-            pass
         return {
             "argv": self.argv,
             "returncode": self.returncode,
@@ -56,8 +54,7 @@ def run_command(argv: Sequence[str], *, cwd: Path = ROOT) -> CommandResult:
         cwd=cwd,
         env=env,
         text=True,
-        stdout=subprocess.PIPE,
-        stderr=subprocess.PIPE,
+        capture_output=True,
         check=False,
     )
     return CommandResult(list(argv), proc.returncode, proc.stdout, proc.stderr)

@@ -1,8 +1,6 @@
 from __future__ import annotations
 
 import argparse
-from pathlib import Path
-import json
 import subprocess
 import tomllib
 
@@ -90,8 +88,7 @@ Do not perform platform upload/activation unless the task explicitly says this i
         argv,
         cwd=ROOT,
         text=True,
-        stdout=subprocess.PIPE,
-        stderr=subprocess.PIPE,
+        capture_output=True,
         check=False,
     )
     events.write_text(proc.stdout, encoding="utf-8")

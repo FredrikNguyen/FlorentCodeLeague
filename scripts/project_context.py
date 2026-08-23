@@ -1,7 +1,7 @@
 from __future__ import annotations
 
-from datetime import datetime, timezone
 import json
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
@@ -13,7 +13,7 @@ START_HERE_PATH = ROOT / "docs/START_HERE.md"
 
 
 def now_utc() -> str:
-    return datetime.now(timezone.utc).isoformat(timespec="seconds").replace("+00:00", "Z")
+    return datetime.now(UTC).isoformat(timespec="seconds").replace("+00:00", "Z")
 
 
 def load_json(path: Path) -> dict[str, Any]:

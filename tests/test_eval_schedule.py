@@ -1,8 +1,8 @@
 from __future__ import annotations
 
-from pathlib import Path
 import tomllib
 import unittest
+from pathlib import Path
 
 from scripts.common import stratified_map_seed_pairs, stratified_screen_side_swaps
 

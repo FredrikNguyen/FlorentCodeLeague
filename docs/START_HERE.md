@@ -15,7 +15,7 @@
 | Candidate | `bots/candidate` |
 | Frozen baseline | `bots/versions/v0047_pressure-economy-steward_20260821-0200_eeafad8f` |
 | Last Codex task | Public-readiness repository audit and cleanup |
-| Last Codex outcome | Removed stale/generated/obsolete tracked files, corrected public documentation and workflow, added contribution/security metadata, and verified tests, tooling, credentials, history, and remote parity |
+| Last Codex outcome | Public-readiness cleanup complete; pinned Ruff 0.16.4 through uv, corrected maintained harness/test lint findings, and verified lint, 67/67 static tests, compileall, and doctor |
 | Last Codex report | docs/SELF_REVIEW.md |
 | Last local report | reports/local-20260823T073457Z |
 
@@ -74,4 +74,4 @@ make live-status
 make live-autopilot
 ```
 
-Generated at `2026-08-23T07:57:48Z` from project state updated `2026-08-23T07:56:47Z` and live state updated `2026-08-20T18:25:06Z`.
+Generated at `2026-08-23T08:17:09Z` from project state updated `2026-08-23T08:17:09Z` and live state updated `2026-08-20T18:25:06Z`.

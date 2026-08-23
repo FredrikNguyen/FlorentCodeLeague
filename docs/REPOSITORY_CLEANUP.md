@@ -46,6 +46,7 @@ allowing the retained v0047 snapshot.
 ## Verification
 
 - Current v0047-focused unit tests: **36/36**.
+- `make lint`: **pass** with Ruff 0.16.4 through `uv`.
 - `make static`: **67/67** tests and compileall passed.
 - `make smoke`: **4/4** command-clean games; report
   `reports/local-20260823T073457Z`.
