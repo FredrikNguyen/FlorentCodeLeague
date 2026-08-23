@@ -1,6 +1,7 @@
 # Florent Code League bot workspace
 
-A competition-ready workspace for developing, testing, reviewing, versioning, and submitting a Florent Code League bot.
+A reproducible workspace for developing, testing, reviewing, versioning, and
+submitting a Florent Code League bot.
 
 **Rules snapshot:** verified against the public documentation, tutorials, changelog, and map-pool page on **2026-08-05**. The platform can change during the competition, so run `make sync-maps` and review the changelog before promoting a submission.
 
@@ -42,16 +43,18 @@ activation from packaging alone.
    ```
    The evaluation configs pin the v0047 comparator. Keep the short smoke and
    all-map regression checks reproducible before considering a new candidate.
-5. Open Codex in this repository and use:
+5. Open Codex in this repository and give it one bounded hypothesis, for example:
    ```text
-   Use the FCL orchestration protocol. Implement the next approved milestone from
-   docs/IMPLEMENTATION_PLAN.md. Sol must plan, Luna must implement, and Sol must
-   review the diff and test evidence before the task is considered complete.
+   Implement docs/CURRENT_PLAN.md in one Luna XHigh session. Run focused checks,
+   inspect the diff, and stop after the smoke tier.
    ```
-6. You do not need to tell Codex to reread the repository in each new chat. Root and nested `AGENTS.md` files route it through `docs/START_HERE.md`, durable state, and only the relevant detailed documents.
+   External planning and review are optional release tools, not the default
+   implementation workflow.
+6. Root and nested `AGENTS.md` files route Codex through `docs/START_HERE.md`,
+   durable state, and only the relevant detailed documents.
 
 7. After an approved candidate passes the release and remote gates, an operator
-can package and deploy it with:
+   can package and deploy it with:
    ```bash
    make release-live SLUG=my-change
    ```
@@ -68,12 +71,13 @@ can package and deploy it with:
   mutable upload tree.
 - Save human-readable experiment notes and metrics. Generated replays, caches,
   temporary experiment configs, and handoff archives are ignored by Git.
-- A failed candidate is rolled back to exact v0047 parity; it is not silently
-  promoted because of a single aggregate result.
+- A failed candidate is rolled back to exact v0047 parity. Promotion requires a
+  direct, side-aware comparison plus clean reliability evidence.
 
 ## Key documents
 
 - [`docs/START_HERE.md`](docs/START_HERE.md): generated concise startup context for every new Codex session.
+- [`docs/CURRENT_PLAN.md`](docs/CURRENT_PLAN.md): the one currently approved bounded plan, or an explicit no-plan placeholder.
 - [`state/project_state.json`](state/project_state.json): machine-readable current milestone, hypothesis, experiment, and next task.
 - [`UPDATES.md`](UPDATES.md): durable cross-session change, deployment, score, and rollback history.
 - [`GAME_RULES.md`](GAME_RULES.md): current rules, entities, API, map pool, tutorial lessons, and known tutorial traps.
@@ -108,3 +112,9 @@ The **2026-08-04** changelog changed Gunner and Sentinel balance. Current values
 - Sentinel: 40 HP, 30 Ti base cost, 18 damage, 10 ammo/shot, 2-round reload.
 
 Do not copy old snippets that assume 10-damage, 10-Ti, 2-ammo Gunners or 3-round Sentinel reloads.
+
+## Public-use status
+
+No open-source license has been selected. Publishing this repository makes the
+source visible but does not grant reuse rights. Add the intended license before
+describing the project as open source.

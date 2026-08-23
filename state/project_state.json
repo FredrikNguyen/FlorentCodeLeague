@@ -1,8 +1,8 @@
 {
   "baseline_path": "bots/versions/v0047_pressure-economy-steward_20260821-0200_eeafad8f",
   "candidate_path": "bots/candidate",
-  "current_experiment": "v411 rejected after 5-10 and 6-9 15-map screens; reports/local-20260821T085912Z",
-  "current_hypothesis": "A future candidate must improve verified route conversion or defensive response without weakening early belt repair",
+  "current_experiment": null,
+  "current_hypothesis": null,
   "current_iteration": {
     "allowed_files": [
       "bots/candidate/bot/constants.py (temporary large-board floor, rolled back)",
@@ -83,7 +83,7 @@
       "Candidate, repair, and rollback smoke were 4/4; all raw games were command-, delivery-, and reliability-clean for the candidate; make static retained only known inherited failures."
     ]
   },
-  "current_milestone": "v0047 retained; repository cleanup and release documentation completed",
+  "current_milestone": "v0047 retained; public-readiness audit complete",
   "current_release_checkpoint": {
     "files_changed": [
       "bots/candidate/bot/constants.py",
@@ -818,9 +818,9 @@
     ]
   },
   "iteration_status": "v410 rejected after 8-7 initial, 17-13 confirmation, 30-30 release gate, and 15-15 repair; exact v0047 candidate parity restored; immutable v0047 remains baseline",
-  "last_codex_outcome": "Removed obsolete archives, v0001-v0046 snapshots, generated replay/cache/temp artifacts, starter bot, and pre-v0047 tests; retained v0047 as the only immutable snapshot; make static 67/67 and smoke 4/4 passed; no bot or live operation changed",
-  "last_codex_report": "docs/REPOSITORY_CLEANUP.md",
-  "last_codex_task": "Repository cleanup, release documentation, and v0047 retention",
+  "last_codex_outcome": "Removed stale/generated/obsolete tracked files, corrected public documentation and workflow, added contribution/security metadata, and verified tests, tooling, credentials, history, and remote parity",
+  "last_codex_report": "docs/SELF_REVIEW.md",
+  "last_codex_task": "Public-readiness repository audit and cleanup",
   "last_files_changed": [
     "bots/candidate/bot/constants.py (temporary large-board floor, rolled back)",
     "bots/candidate/bot/dynamic.py (temporary floor and Sentinel repair, rolled back)",
@@ -4509,7 +4509,7 @@
       "reports/local-20260820T145838Z"
     ]
   },
-  "next_recommended_task": "Paused by user after cleanup; resume with a distinct replay-backed v0047 comparison",
+  "next_recommended_task": "Choose an open-source license if reuse is intended; otherwise start the next bounded v0047 experiment",
   "previous_iteration": {
     "decision": "Reject v305 after one bounded repair: candidate was 7-8 with 76,530 vs 87,670 Ti and no repeatable aggregate edge; exact v0044 source restored.",
     "files_changed": [
@@ -4593,7 +4593,7 @@
     "Platform v108 is active_observing; live policy blocks deployment until the observation state is resolved."
   ],
   "schema_version": 1,
-  "updated_at": "2026-08-23T07:36:28Z",
+  "updated_at": "2026-08-23T07:56:47Z",
   "v390_iteration_archive": {
     "allowed_files": [
       "bots/candidate/bot/attacker.py (temporary Launcher target ranking, rolled back)",

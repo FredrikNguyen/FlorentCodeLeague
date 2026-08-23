@@ -16,13 +16,17 @@ and report references remain in `experiments/`, `UPDATES.md`, and `reports/`.
 
 ## Removed from the checkout
 
-- Obsolete root starter/planning ZIP archives and the generated ChatGPT handoff
-  ZIP. The Markdown packets remain the reviewable source files.
+- Obsolete root starter/planning ZIP archives and generated ChatGPT handoff
+  outputs. Packets are rebuilt on demand from tracked source and state.
 - v0001–v0046 immutable snapshot directories.
 - Root and replay-directory `.replay26` payloads, the old v73 replay-diagnosis
   bundle, Python/test/tool caches, and experiment `.tmp-*` run artifacts.
 - Pre-v0047 tests and the starter benchmark that imported modules removed by the
   current `bot/` package layout. The v0047-focused tests remain under `tests/`.
+- The obsolete root starter `main.py`, stale v0001 submission payload, generated
+  package metadata, accumulated rejected plans, and superseded iteration packet.
+- Ignored historical submission/platform packages were moved to a recoverable
+  temporary quarantine; only the v0047 ZIP and manifest remain locally.
 
 The removed generated files were moved to a temporary quarantine during this
 session rather than irreversibly erased. They are not part of the repository or

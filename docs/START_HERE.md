@@ -8,15 +8,15 @@
 
 | Field | Value |
 |---|---|
-| Milestone | v0047 retained; repository cleanup and release documentation completed |
-| Current hypothesis | A future candidate must improve verified route conversion or defensive response without weakening early belt repair |
-| Current experiment | v411 rejected after 5-10 and 6-9 15-map screens; reports/local-20260821T085912Z |
-| Next recommended task | Paused by user after cleanup; resume with a distinct replay-backed v0047 comparison |
+| Milestone | v0047 retained; public-readiness audit complete |
+| Current hypothesis | unknown |
+| Current experiment | unknown |
+| Next recommended task | Choose an open-source license if reuse is intended; otherwise start the next bounded v0047 experiment |
 | Candidate | `bots/candidate` |
 | Frozen baseline | `bots/versions/v0047_pressure-economy-steward_20260821-0200_eeafad8f` |
-| Last Codex task | Repository cleanup, release documentation, and v0047 retention |
-| Last Codex outcome | Removed obsolete archives, v0001-v0046 snapshots, generated replay/cache/temp artifacts, starter bot, and pre-v0047 tests; retained v0047 as the only immutable snapshot; make static 67/67 and smoke 4/4 passed; no bot or live operation changed |
-| Last Codex report | docs/REPOSITORY_CLEANUP.md |
+| Last Codex task | Public-readiness repository audit and cleanup |
+| Last Codex outcome | Removed stale/generated/obsolete tracked files, corrected public documentation and workflow, added contribution/security metadata, and verified tests, tooling, credentials, history, and remote parity |
+| Last Codex report | docs/SELF_REVIEW.md |
 | Last local report | reports/local-20260823T073457Z |
 
 ## Live deployment snapshot
@@ -32,16 +32,6 @@
 | Current candidate live score | 0.6000 |
 | Last observation | 2026-08-20T18:25:06Z |
 | Last decision | observation captured |
-
-## Working tree snapshot
-
-| Field | Value |
-|---|---|
-| Branch | `agent/publish-v10` |
-| Commit | `11a89464` |
-| Status | working tree has changes |
-
-Always run `git status --short` yourself; this generated snapshot may be older than the working tree.
 
 ## Startup checklist
 
@@ -84,4 +74,4 @@ make live-status
 make live-autopilot
 ```
 
-Generated at `2026-08-23T07:42:34Z` from project state updated `2026-08-23T07:36:28Z` and live state updated `2026-08-20T18:25:06Z`.
+Generated at `2026-08-23T07:57:48Z` from project state updated `2026-08-23T07:56:47Z` and live state updated `2026-08-20T18:25:06Z`.

@@ -6368,6 +6368,17 @@ Also record rating delta and opponent-adjusted residual when available. Reliabil
 
 <!-- Automation appends newest entries immediately below this comment. -->
 
+### Public-readiness audit — 2026-08-23T07:56:59Z
+
+- Scope: repository hygiene, documentation, metadata, secret/history screening, deterministic checks, and Git remote parity; bot and live platform state were not changed.
+- Removed: obsolete root starter main.py, v0001 docs submission, generated egg-info and ChatGPT packets/context, stale iteration packet, and accumulated rejected content from docs/CURRENT_PLAN.md.
+- Updated: README.md, .gitignore, .gitattributes, CONTRIBUTING.md, SECURITY.md, docs/{CURRENT_PLAN,REPOSITORY_CLEANUP,REPOSITORY_STRUCTURE,SELF_REVIEW,START_HERE}.md, scripts/project_context.py, and state/project_state.json.
+- Checks: startup-context 6/6; make static 67/67 plus compileall; make doctor passed with fcode 2.3.4, Codex CLI 0.147.0, Git, and 43 synced maps.
+- Security: current tree and all reachable commits had no common private-key/token signatures; no tracked private home paths were found; git fsck was clean.
+- Local artifacts: 92 ignored superseded submission/platform files were moved to `/tmp/fcl-public-audit-FRNano`; the v0047 ZIP and manifest were retained.
+- Risk: no open-source license has been selected; public visibility is ready, but reuse rights remain reserved until the owner chooses a license.
+
+
 ### Live observation captured — 2026-08-20T18:25:06Z
 
 - Active version: 109

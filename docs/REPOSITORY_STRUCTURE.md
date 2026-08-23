@@ -111,6 +111,7 @@
 ├── reports/
 │   └── .gitkeep
 └── artifacts/
+    ├── chatgpt/                 # generated, ignored
     ├── platform/
     │   └── .gitkeep
     └── submissions/
@@ -177,7 +178,9 @@ records are kept even when a candidate is rejected.
 
 ### `scripts/`
 
-Operator and automation tooling. Only the primary Sol/operator executes platform writes under live policy; Luna may implement but not operate them.
+Operator and automation tooling. Platform writes are explicit, guarded
+operations governed by live policy; ordinary implementation sessions do not
+perform them.
 
 ### `reports/`
 
@@ -190,8 +193,8 @@ Synced platform maps. `fcode maps sync` updates/adds but does not remove retired
 ### `artifacts/`
 
 Packaged submissions and downloaded platform copies. Hash these for provenance;
-generated handoff ZIPs are intentionally ignored because the Markdown packets
-are the source of truth.
+generated ChatGPT packets and handoff ZIPs are ignored because they are
+reproducible from tracked state and source.
 
 ## Growth rules
 

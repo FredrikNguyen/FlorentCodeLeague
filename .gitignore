@@ -7,6 +7,7 @@ __pycache__/
 venv/
 .env
 .fcode/
+*.egg-info/
 *.replay26
 maps/*.map26
 replays/*
@@ -21,6 +22,9 @@ artifacts/platform/*
 # Generated handoff archives are reproducible from the Markdown packets.
 /*.zip
 artifacts/chatgpt/*.zip
+artifacts/chatgpt/*.md
+docs/CHATGPT_CONTEXT.md
+docs/submissions/
 
 # Experiment notes are durable; dot-prefixed entries are disposable run data.
 experiments/.tmp-*

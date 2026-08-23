@@ -3,7 +3,6 @@ from __future__ import annotations
 from datetime import datetime, timezone
 import json
 from pathlib import Path
-import subprocess
 from typing import Any
 
 from common import ROOT, save_json
@@ -29,32 +28,7 @@ def display(value: Any) -> str:
     return str(value).replace("\n", " ").replace("|", "\\|")
 
 
-def git_value(*args: str, empty_value: str = "unknown") -> str:
-    proc = subprocess.run(
-        ["git", *args],
-        cwd=ROOT,
-        text=True,
-        stdout=subprocess.PIPE,
-        stderr=subprocess.DEVNULL,
-        check=False,
-    )
-    if proc.returncode != 0:
-        return "unknown"
-    rendered = proc.stdout.strip()
-    return rendered if rendered else empty_value
-
-
 def render_start_here(project: dict[str, Any], live: dict[str, Any]) -> str:
-    branch = git_value("branch", "--show-current")
-    short_sha = git_value("rev-parse", "--short=8", "HEAD")
-    dirty = git_value("status", "--short", empty_value="")
-    if dirty == "unknown":
-        dirty_summary = "git metadata unavailable"
-    elif dirty:
-        dirty_summary = "working tree has changes"
-    else:
-        dirty_summary = "clean"
-
     return f"""# Start here
 
 > Generated cross-session handoff. Do not hand-edit dynamic fields. Update
@@ -89,16 +63,6 @@ def render_start_here(project: dict[str, Any], live: dict[str, Any]) -> str:
 | Current candidate live score | {display(live.get('current_live_score'))} |
 | Last observation | {display(live.get('last_observation_at'))} |
 | Last decision | {display(live.get('last_decision'))} |
-
-## Working tree snapshot
-
-| Field | Value |
-|---|---|
-| Branch | `{display(branch)}` |
-| Commit | `{display(short_sha)}` |
-| Status | {dirty_summary} |
-
-Always run `git status --short` yourself; this generated snapshot may be older than the working tree.
 
 ## Startup checklist
 
