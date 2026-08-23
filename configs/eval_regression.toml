@@ -1,9 +1,21 @@
 candidate = "bots/candidate"
-baseline = "bots/versions/v0008_reviewer-current-best_20260806-1209_3f2505d7"
+baseline = "bots/versions/v0047_pressure-economy-steward_20260821-0200_eeafad8f"
 tle_ms = 10
-seeds = [1, 19, 101]
 maps = [
-  "sprint", "string", "bridge", "crossfire", "atoll",
-  "sweden", "longship", "vault", "aurora"
+  "antler", "archipelago", "auroraveil", "drakkarfjord", "drumlin",
+  "fjordgate", "frostgate", "glacierkeep", "icefloe", "midgard",
+  "nordkap", "ragnarok", "royale", "valkyrie", "yulerune"
 ]
 side_swap = true
+# The 15-game screen includes every map exactly once. The selected seed per map
+# is drawn from the full pool by this reproducible seed. Rotate screen_seed for
+# each new iteration and preserve it in the report manifest so the screen
+# cannot be tuned to a fixed map subset or seed subset. Side-order coverage is
+# reserved for the 60-game release gate.
+seeds = [1, 7, 19, 43, 67, 101, 149]
+# Fast all-map checkpoint: one coverage game per configured map (15 games).
+# The 60-game release gate still covers every map, endpoint seed, and side
+# order.
+screen_pairs = 15
+screen_games = 15
+screen_seed = 172

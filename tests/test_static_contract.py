@@ -58,7 +58,7 @@ class StaticContractTest(unittest.TestCase):
         self.assertEqual([], offenders)
 
     def test_candidate_has_only_pure_python_and_allowed_imports(self) -> None:
-        allowed_roots = {"__future__", "collections", "collections.abc", "dataclasses", "enum", "math", "statistics", "time", "typing", "fcode", "bot"}
+        allowed_roots = {"__future__", "collections", "collections.abc", "dataclasses", "enum", "math", "random", "statistics", "time", "typing", "fcode", "bot"}
         for path in CANDIDATE.rglob("*.py"):
             tree = ast.parse(path.read_text(encoding="utf-8"))
             for node in ast.walk(tree):

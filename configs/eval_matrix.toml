@@ -1,10 +1,12 @@
 candidate = "bots/candidate"
-baseline = "bots/versions/v0008_reviewer-current-best_20260806-1209_3f2505d7"
+baseline = "bots/versions/v0047_pressure-economy-steward_20260821-0200_eeafad8f"
 tle_ms = 10
-seeds = [1, 7, 19, 43, 101]
+# Routine release gate: two endpoint deterministic seeds. Every configured map
+# still runs in both side orders (60 games total).
+seeds = [1, 101]
 maps = [
-  "atoll", "aurora", "bridge", "crossfire", "duel", "fjord", "hive",
-  "jackpot", "longship", "pinch", "quarry", "runestone", "showdown",
-  "skerry", "sprint", "strait", "string", "sweden", "twins", "vase", "vault"
+  "antler", "archipelago", "auroraveil", "drakkarfjord", "drumlin",
+  "fjordgate", "frostgate", "glacierkeep", "icefloe", "midgard",
+  "nordkap", "ragnarok", "royale", "valkyrie", "yulerune"
 ]
 side_swap = true

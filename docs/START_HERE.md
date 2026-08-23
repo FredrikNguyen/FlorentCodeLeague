@@ -8,29 +8,29 @@
 
 | Field | Value |
 |---|---|
-| Milestone | v0015 close-contact bootstrap defense packaged; v72 active and observing before deployment unlock |
-| Current hypothesis | On close-contact non-balanced geometries, limiting redundant pre-income emergency structures to one designated free Defender preserves first-route funding without weakening distant or post-income defense. |
-| Current experiment | experiments/v72-close-contact-bootstrap-defense.md |
-| Next recommended task | Continue deterministic observation of platform v72 to 24 series; promote it as known-good if evidence remains positive, then deploy packaged v0015 with v72 as rollback. |
+| Milestone | v0047 retained; repository cleanup and release documentation completed |
+| Current hypothesis | A future candidate must improve verified route conversion or defensive response without weakening early belt repair |
+| Current experiment | v411 rejected after 5-10 and 6-9 15-map screens; reports/local-20260821T085912Z |
+| Next recommended task | Paused by user after cleanup; resume with a distinct replay-backed v0047 comparison |
 | Candidate | `bots/candidate` |
-| Frozen baseline | `bots/versions/v0015_close-contact-bootstrap-defense_20260809-1903_7dd72f03` |
-| Last Codex task | Continue evidence-based iterations toward 2000 Elo while retaining the strongest reliable live rollback. |
-| Last Codex outcome | v0015 passed a recomputed 51-39 current-pool gate, 4-1 remote gate, smoke/package/focused checks, and is frozen pending v72 live promotion at 24 series. |
-| Last Codex report | experiments/v72-close-contact-bootstrap-defense.md |
-| Last local report | reports/local-20260809T185644Z |
+| Frozen baseline | `bots/versions/v0047_pressure-economy-steward_20260821-0200_eeafad8f` |
+| Last Codex task | Repository cleanup, release documentation, and v0047 retention |
+| Last Codex outcome | Removed obsolete archives, v0001-v0046 snapshots, generated replay/cache/temp artifacts, starter bot, and pre-v0047 tests; retained v0047 as the only immutable snapshot; make static 67/67 and smoke 4/4 passed; no bot or live operation changed |
+| Last Codex report | docs/REPOSITORY_CLEANUP.md |
+| Last local report | reports/local-20260823T073457Z |
 
 ## Live deployment snapshot
 
 | Field | Value |
 |---|---|
 | Phase | `active_observing` |
-| Active platform version | 73 |
+| Active platform version | 109 |
 | Pending version | unknown |
-| Previous active version | 72 |
-| Last known-good version | 72 |
-| Last known-good live score | 0.6417 |
-| Current candidate live score | unknown |
-| Last observation | 2026-08-09T20:13:19Z |
+| Previous active version | 107 |
+| Last known-good version | 107 |
+| Last known-good live score | 0.5128 |
+| Current candidate live score | 0.6000 |
+| Last observation | 2026-08-20T18:25:06Z |
 | Last decision | observation captured |
 
 ## Working tree snapshot
@@ -38,7 +38,7 @@
 | Field | Value |
 |---|---|
 | Branch | `agent/publish-v10` |
-| Commit | `7dd72f03` |
+| Commit | `11a89464` |
 | Status | working tree has changes |
 
 Always run `git status --short` yourself; this generated snapshot may be older than the working tree.
@@ -84,4 +84,4 @@ make live-status
 make live-autopilot
 ```
 
-Generated at `2026-08-09T20:13:19Z` from project state updated `2026-08-09T19:03:58Z` and live state updated `2026-08-09T20:13:19Z`.
+Generated at `2026-08-23T07:42:34Z` from project state updated `2026-08-23T07:36:28Z` and live state updated `2026-08-20T18:25:06Z`.

@@ -1,6 +1,6 @@
 candidate = "bots/candidate"
-baseline = "bots/versions/v0008_reviewer-current-best_20260806-1209_3f2505d7"
+baseline = "bots/versions/v0047_pressure-economy-steward_20260821-0200_eeafad8f"
 tle_ms = 10
 seeds = [1, 7]
-maps = ["sprint", "string", "duel", "bridge", "crossfire"]
+maps = ["fjordgate", "antler", "icefloe", "archipelago", "glacierkeep"]
 side_swap = true

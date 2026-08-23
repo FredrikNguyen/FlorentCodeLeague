@@ -46,8 +46,11 @@
 
 ## Status
 
-Passed local and remote release gates; packaged and waiting for platform v72 to
-reach the 24-series known-good promotion threshold before deployment.
+Passed local and remote release gates, packaged, and deployed as platform v73.
+Platform v72 was first promoted as known-good from 24 rated series and is the
+ready rollback target. v73 activation report:
+`reports/live-deploy-20260809T201220Z`; initial observation:
+`reports/live-observe-20260809T201259Z`.
 
 ## Live parent evidence
 
@@ -58,3 +61,23 @@ reach the 24-series known-good promotion threshold before deployment.
   `moonrise`: v72 can build multiple Barriers and Launchers before establishing
   income, then die or remain economically starved. Summary:
   `reports/v72-live-diagnosis-20260809T1915Z/summary.md`.
+
+## Live candidate evidence
+
+- Platform v73 opened 1-4 against `the one piece`, version 43, losing 6.779
+  Elo. It won `archipelago` and lost `drumlin`, `saga`, `meander`, and
+  `lighthouse`; all five games were free of match errors and resignations.
+- After one rated series: live score 0.2000, opponent-adjusted residual
+  -0.2118, rating 1376.308, rank 50/116. This is below the 12-series decision
+  minimum, so the decision remains `insufficient_data` and v72 stays the
+  rollback target. Evidence: `reports/live-observe-20260809T202043Z`.
+- An exact-map/seed local parent comparison was 5-5 across both sides, with
+  side A winning all ten games. v0015 collected 29,070 titanium versus 30,960
+  for v0014; `meander` retained a zero-income side. This points to
+  orientation/route execution as the larger weakness and does not establish a
+  broad v0015 regression. Summary: `reports/v73-first-series-exact-seed/summary.md`.
+- After v73 won its second live series 3-2, the second exact-seed parent block
+  was 7-3 for v0015 with 27,680 titanium versus 20,810. Combined exact-seed
+  evidence is 12-8 and 56,750 versus 51,770, so the live 4-6 opening does not
+  currently justify rollback as a parent regression. `meander` nevertheless
+  collected zero on both v0015 sides for both sampled seeds.

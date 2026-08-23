@@ -35,7 +35,7 @@ Checks:
 
 ### Layer 1 — smoke and visual diagnosis
 
-Use small/fast and structurally different maps:
+Use a small, fast all-map checkpoint before the release gate:
 
 - `sprint`
 - `string`
@@ -43,7 +43,13 @@ Use small/fast and structurally different maps:
 - `bridge`
 - `crossfire`
 
-For each change:
+For each change, run 15 stratified map/seed pairs (all 15 configured maps
+exactly once). This is the minimum meaningful quick screen: it preserves map
+coverage while dropping the redundant side-order repeat. Side-order coverage
+remains in the complete release gate; rotate `screen_seed` across iterations
+so the selected map/seed pair for each map is not fixed.
+The smoke maps below remain useful for visual inspection when a replay audit
+needs named compact/medium cases:
 
 - candidate vs baseline;
 - candidate on both sides;
@@ -79,11 +85,17 @@ Default config groups:
 Run:
 
 - every current map for release candidates;
-- at least 5 deterministic seeds;
+- two endpoint deterministic seeds (`1`, `101`) selected to span the fixed
+  seed range;
 - both side orders;
 - baseline and ablation opponents.
 
-Minimum release matrix: `21 maps × 5 seeds × 2 sides = 210 games`.
+Minimum release matrix: `15 current maps × 2 endpoint seeds (1, 101) × 2
+sides = 60 games`. This remains complete map and side-order coverage for the
+configured pool while cutting the routine gate by 71% from the historical
+210-game run. If a tie-heavy or stochastic hypothesis needs extra confidence,
+use an optional 120-game audit (four rotating seeds × both sides); the old
+210-game matrix is archival evidence rather than a routine requirement.
 
 Use more seeds for stochastic or tie-heavy policies.
 

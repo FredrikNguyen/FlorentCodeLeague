@@ -20,17 +20,35 @@
 │           └── SKILL.md
 ├── bots/
 │   ├── baseline/
-│   │   └── main.py
+│   │   ├── AGENTS.md
+│   │   ├── README.md
+│   │   ├── DESIGN_dynamic_builders.md
+│   │   ├── STRATEGY_ALIGNMENT.md
+│   │   ├── main.py
+│   │   └── bot/
+│   │       ├── __init__.py
+│   │       ├── attacker.py
+│   │       ├── constants.py
+│   │       ├── core_role.py
+│   │       ├── defender.py
+│   │       ├── dynamic.py
+│   │       ├── navigation.py
+│   │       └── util.py
 │   ├── candidate/
 │   │   ├── AGENTS.md
 │   │   ├── main.py
 │   │   └── bot/
 │   │       ├── __init__.py
-│   │       ├── player.py
-│   │       ├── comms.py
-│   │       └── navigation.py
+│   │       ├── attacker.py
+│   │       ├── constants.py
+│   │       ├── core_role.py
+│   │       ├── defender.py
+│   │       ├── dynamic.py
+│   │       ├── navigation.py
+│   │       └── util.py
 │   └── versions/
-│       └── .gitkeep
+│       ├── .gitkeep
+│       └── v0047_pressure-economy-steward_20260821-0200_eeafad8f/
 ├── configs/
 │   ├── codex_harness.toml
 │   ├── eval_smoke.toml
@@ -70,6 +88,7 @@
 │   ├── codex_v2_visible.sh
 │   ├── doctor.py
 │   ├── common.py
+│   ├── analyze_replay.py
 │   ├── run_local_matrix.py
 │   ├── remote_gate.py
 │   ├── package_candidate.py
@@ -81,6 +100,7 @@
 │   └── live_autopilot.py
 ├── tests/
 │   ├── AGENTS.md
+│   ├── test_analyze_replay.py
 │   ├── test_static_contract.py
 │   ├── test_harness_contract.py
 │   └── test_startup_context.py
@@ -129,7 +149,11 @@ Native custom-agent configuration plus the orchestration skill. Model/reasoning 
 
 ### `bots/baseline/`
 
-Frozen comparator corresponding to the currently trusted local baseline. Never edit it during an experiment.
+Frozen local comparator corresponding to the trusted release of record. Its
+executable contents mirror the upload-shaped v0047 snapshot; the companion
+Markdown files explain the strategy. Do not edit it during an experiment. The
+immutable, upload-shaped copy is
+`bots/versions/v0047_pressure-economy-steward_20260821-0200_eeafad8f/`.
 
 ### `bots/candidate/`
 
@@ -137,7 +161,9 @@ Only mutable bot implementation. It must be a self-contained uploadable director
 
 ### `bots/versions/`
 
-Immutable snapshots created by `package_candidate.py`. Never hand-edit a snapshot.
+Immutable snapshots created by `package_candidate.py`. Only v0047 is retained in
+this checkout so rollback provenance is unambiguous; older experiment records
+remain in `experiments/` and `UPDATES.md`. Never hand-edit the retained snapshot.
 
 ### `configs/`
 
@@ -145,7 +171,9 @@ Evaluation, harness, and live-operation policies. Bot runtime must not depend on
 
 ### `experiments/`
 
-One human-readable hypothesis/result record per candidate version.
+One human-readable hypothesis/result record per candidate version. Generated
+`.tmp-*` run directories and temporary TOML files are ignored; durable Markdown
+records are kept even when a candidate is rejected.
 
 ### `scripts/`
 
@@ -161,7 +189,9 @@ Synced platform maps. `fcode maps sync` updates/adds but does not remove retired
 
 ### `artifacts/`
 
-Packaged submissions and downloaded platform copies. Hash these for provenance.
+Packaged submissions and downloaded platform copies. Hash these for provenance;
+generated handoff ZIPs are intentionally ignored because the Markdown packets
+are the source of truth.
 
 ## Growth rules
 

@@ -12,6 +12,47 @@ Build the strongest reliable Florent Code League bot through small, measurable, 
 - Sol planning normally happens in standard ChatGPT using `artifacts/chatgpt/PLANNING_PACKET.md`, outside the Codex agentic pool.
 - Sol review is optional and normally reserved for release candidates, architecture rewrites, unexplained regressions, or explicit user requests.
 
+## Baseline comparison and promotion
+
+- Every candidate is compared directly against the immutable moving baseline
+  recorded in `state/project_state.json`; do not compare it to an older control
+  or infer improvement from a standalone score.
+- Paired aggregate win rate is the primary promotion metric. A clear positive
+  margin in the direct 15-game screen (and a materially positive result in the
+  60-game gate) is sufficient even when one or two maps regress; localized map
+  regressions are recorded as risks rather than an automatic veto.
+- The 15-game screen uses one deterministic stratified-random pair for each
+  configured map. `screen_seed` is rotated per iteration and retained in the
+  report manifest, so map/seed selection cannot be tuned to a fixed subset.
+  Side-order coverage remains in the 60-game gate: all 15 configured maps,
+  endpoint deterministic seeds `1` and `101`, and both side orders. Historical
+  210-game runs remain archival evidence, not routine work.
+- Reliability remains a hard safeguard: command failures, escaped exceptions,
+  TLEs, suspicious output, or a severe delivery/no-delivery collapse block
+  promotion regardless of aggregate wins.
+- When the aggregate result qualifies, archive the candidate as the new
+  immutable baseline, update all evaluation configs and durable state, then
+  package/upload through the guarded submission workflow. Keep the prior
+  baseline available for rollback and observe the live submission before the
+  next experiment.
+
+## Parallel Luna evaluation
+
+- The root agent remains the orchestrator and owns the durable checkpoint.
+- For an explicitly requested parallel iteration, start one Luna worker from
+  an immutable copy of the current candidate to run the baseline screen or
+  replay analysis, and a separate Luna worker for the single production
+  hypothesis. The test worker must snapshot before the implementation worker
+  edits the shared candidate.
+- Only one worker may write production candidate files for an iteration.
+  Workers must state their owned files, preserve unrelated dirty work, and
+  leave plans/state/baseline/version snapshots to the root agent.
+- Reconcile the snapshot result and implementation result before promotion;
+  a parallel screen is evidence for the exact pre-edit candidate, not proof
+  of the edited candidate. If the implementation cannot preserve the Store
+  schema or another invariant, stop and record the blocker instead of widening
+  the iteration.
+
 ## Startup context
 
 At the start of a session:
