@@ -1,39 +1,46 @@
+# Python and tooling
 __pycache__/
 *.py[cod]
+*.egg-info/
 .pytest_cache/
 .ruff_cache/
 .mypy_cache/
+.coverage
+coverage.xml
+htmlcov/
+.tox/
 .venv/
 venv/
+build/
+dist/
+
+# Credentials and local configuration
 .env
+.env.*
+!.env.example
 .fcode/
-*.egg-info/
+
+# Game and evaluation output
+maps/
+replays/
+reports/
+artifacts/
+*.map26
 *.replay26
-maps/*.map26
-replays/*
-!replays/.gitkeep
-reports/*
-!reports/.gitkeep
-artifacts/submissions/*
-!artifacts/submissions/.gitkeep
-artifacts/platform/*
-!artifacts/platform/.gitkeep
+*.zip
 
-# Generated handoff archives are reproducible from the Markdown packets.
-/*.zip
-artifacts/chatgpt/*.zip
-artifacts/chatgpt/*.md
+# Local development history and generated handoffs
+experiments/
+state/
+bots/versions/
+docs/CURRENT_PLAN.md
 docs/CHATGPT_CONTEXT.md
-docs/submissions/
 
-# Experiment notes are durable; dot-prefixed entries are disposable run data.
-experiments/.tmp-*
-
-# Keep only the current immutable release of record locally. New snapshots
-# remain ignored until an explicit release decision archives one.
-bots/versions/*
-!bots/versions/.gitkeep
-!bots/versions/v0047_pressure-economy-steward_20260821-0200_eeafad8f/
-!bots/versions/v0047_pressure-economy-steward_20260821-0200_eeafad8f/**
-
-state/codex_runtime.json
+# Editor and operating-system files
+.idea/
+.vscode/
+.DS_Store
+Thumbs.db
+*.swp
+*.swo
+*.log

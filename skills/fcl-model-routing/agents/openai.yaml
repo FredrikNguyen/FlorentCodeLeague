@@ -1,4 +1,0 @@
-interface:
-  display_name: "FCL Model Routing"
-  short_description: "Route light work to Luna, heavy reviews to Sol"
-  default_prompt: "Use $fcl-model-routing to select the model and review depth for a Florent Code League task."

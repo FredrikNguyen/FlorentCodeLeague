@@ -21,23 +21,23 @@ from .constants import (
     BELT_OUT_GAP,
     BELT_OUT_UNKNOWN,
     BLACKLIST_ROUNDS,
-    EARLY_HARVEST_RANGE,
-    ECONOMY_PRIORITY_CHAINS,
     CARDINALS,
     CHAIN_BLOCKED_LIMIT,
     CHAIN_SLACK,
     DIRECTIONS,
+    EARLY_HARVEST_RANGE,
+    ECONOMY_PRIORITY_CHAINS,
     EXPLORE_MIN_DIST_SQ,
     GUNNER_MIN_CORE_DIST_SQ,
     GUNNER_NEAR_CORE_DIST_SQ,
     MODE_CHAIN,
     MODE_SCOUT,
     NAV_GIVEUP,
+    ORE_CURSOR_MASK,
+    ORE_QUEUE_LEN,
     ORE_TURRET_MAX_PER_BUILDER,
     ORE_TURRET_MIN_ROUND,
     ORE_TURRET_RESERVE,
-    ORE_QUEUE_LEN,
-    ORE_CURSOR_MASK,
     SLOT_DEFENDER_ID,
     SLOT_HARVESTER_COUNT,
     SLOT_ORE_CURSOR,
@@ -1113,7 +1113,6 @@ class DefenderMixin:
         Both roles call this — an attacker passing through can still tip off
         the defenders even though it never harvests anything itself.
         """
-        pos = ct.get_position()
         for tile in ct.get_nearby_tiles():
             if ct.get_tile_env(tile) != Environment.ORE_TITANIUM:
                 continue

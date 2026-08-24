@@ -45,19 +45,37 @@ constant in one place — that's the file to edit when balancing the bot.
 """
 
 
-from fcode import Controller, Direction, EntityType, Environment, GameError, Position
-
 from bot.attacker import AttackerMixin
-from bot.constants import (CARDINALS, CORE_SIEGE_CRISIS_HP, CORE_SIEGE_HP, CORE_SIEGE_RECALL_SQ, DIRECTIONS, IDLE_ATTACK_RESERVE,
-                       HARVEST_RANGE_FRAC, MODE_CHAIN, MODE_SCOUT, ROLE_ATTACKER, ROLE_DEFENDER,
-                       ROLE_DYNAMIC, SIEGE_HP_SHIFT, SLOT_CORE_SIEGE, SLOT_CORE_X, SLOT_CORE_Y,
-                       SLOT_ENEMY_CORE, SLOT_HARVESTER_COUNT, SLOT_PERMA_ATTACKER_ID, SLOT_PERMA_DEFENDER_ID, SLOT_SECOND_ATTACKER_ID,
-                       TASK_NONE)
+from bot.constants import (
+    CARDINALS,
+    CORE_SIEGE_CRISIS_HP,
+    CORE_SIEGE_HP,
+    CORE_SIEGE_RECALL_SQ,
+    DIRECTIONS,
+    HARVEST_RANGE_FRAC,
+    IDLE_ATTACK_RESERVE,
+    MODE_CHAIN,
+    MODE_SCOUT,
+    ROLE_ATTACKER,
+    ROLE_DEFENDER,
+    ROLE_DYNAMIC,
+    SIEGE_HP_SHIFT,
+    SLOT_CORE_SIEGE,
+    SLOT_CORE_X,
+    SLOT_CORE_Y,
+    SLOT_ENEMY_CORE,
+    SLOT_HARVESTER_COUNT,
+    SLOT_PERMA_ATTACKER_ID,
+    SLOT_PERMA_DEFENDER_ID,
+    SLOT_SECOND_ATTACKER_ID,
+    TASK_NONE,
+)
 from bot.core_role import CoreMixin
 from bot.defender import DefenderMixin
 from bot.dynamic import DynamicMixin
 from bot.navigation import NavigationMixin
 from bot.util import adjacent, core_footprint, in_bounds, unpack_pos
+from fcode import Controller, Direction, EntityType, Environment, GameError, Position
 
 
 class Player(CoreMixin, DefenderMixin, AttackerMixin, DynamicMixin, NavigationMixin):
@@ -193,7 +211,7 @@ class Player(CoreMixin, DefenderMixin, AttackerMixin, DynamicMixin, NavigationMi
                 self._run_sentinel(ct)
             elif etype == EntityType.LAUNCHER:
                 self._run_launcher(ct)
-        except Exception as e:  # noqa: BLE001 — never let a unit die to an edge case
+        except Exception:  # noqa: BLE001 — never let a unit die to an edge case
             return
 
     def _run_launcher(self, ct: Controller) -> None:

@@ -1,18 +1,15 @@
 # Contributing
 
-Keep changes small, measurable, and reversible.
+Keep each change focused and compare behavior directly with `bots/baseline/`.
 
-1. Read `docs/START_HERE.md` and the nearest `AGENTS.md`.
-2. Start from `bots/candidate/`; never edit the retained version snapshot.
-3. Test one hypothesis against the baseline recorded in
-   `state/project_state.json`.
-4. Run focused tests, `make static`, and at most `make smoke` for an ordinary
-   change. Broader gates belong at experiment or release checkpoints.
-5. Keep generated maps, replays, reports, packages, and handoff packets out of
-   Git. Record concise durable evidence in an experiment note and `UPDATES.md`.
-6. Inspect the complete diff before committing. Do not include credentials or
-   authenticated platform output.
+1. Create the environment with `uv sync` and sync maps with `make sync-maps`.
+2. Change only `bots/candidate/` for strategy experiments.
+3. Add or update a focused deterministic test.
+4. Run `make check` and `make smoke`.
+5. Use `make eval-regression` before proposing a strategic change and
+   `make eval-local` for a release candidate.
+6. Inspect the full diff and keep generated maps, reports, replays, snapshots,
+   packages, credentials, and local experiment notes out of Git.
 
-Live upload, activation, promotion, and rollback are operator actions. Follow
-`docs/SUBMISSION_AND_VERSIONING.md` and `docs/LIVE_AUTOPILOT.md` before using
-those workflows.
+Do not upload or activate a submission as part of an ordinary contribution.
+Platform writes require explicit operator confirmation.

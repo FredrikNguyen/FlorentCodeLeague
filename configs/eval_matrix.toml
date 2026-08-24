@@ -1,5 +1,5 @@
 candidate = "bots/candidate"
-baseline = "bots/versions/v0047_pressure-economy-steward_20260821-0200_eeafad8f"
+baseline = "bots/baseline"
 tle_ms = 10
 # Routine release gate: two endpoint deterministic seeds. Every configured map
 # still runs in both side orders (60 games total).

@@ -610,8 +610,8 @@ SIEGE_HP_SHIFT = 1 << 21
 # heavy sentinel gates cost 13 points of win rate (see SENTINEL_SITE_BLACKLIST
 # above) and early pressure is real. Only the first Sentinel is allowed before
 # the larger five-chain economy is established; the existing second attacker
-# remains on its proven v100 schedule, so this candidate isolates the turret
-# spend rather than delaying the combat workforce.
+# remains on its proven schedule, isolating turret spend from delays to the
+# combat workforce.
 SENTINEL_POOL_TARGET_EARLY = 1
 
 # A confirmed enemy Core may be ringed with a small barrier cage after the

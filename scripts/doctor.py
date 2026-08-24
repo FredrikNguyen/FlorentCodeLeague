@@ -13,7 +13,7 @@ def main() -> int:
     if sys.version_info[:2] not in {(3, 12), (3, 13)}:
         problems.append("FCL documents require Python 3.12 or 3.13.")
 
-    for exe in ("fcode", "codex", "git"):
+    for exe in ("fcode", "git"):
         path = shutil.which(exe)
         print(f"{exe}: {path or 'NOT FOUND'}")
         if not path:
@@ -22,15 +22,11 @@ def main() -> int:
     if shutil.which("fcode"):
         result = run_command(["fcode", "--version"])
         print(f"fcode version: {result.stdout.strip() or result.stderr.strip()}")
-    if shutil.which("codex"):
-        result = run_command(["codex", "--version"])
-        print(f"codex version: {result.stdout.strip() or result.stderr.strip()}")
-
     for required in (
-        ROOT / "AGENTS.md",
         ROOT / "GAME_RULES.md",
         ROOT / "bots/candidate/main.py",
-        ROOT / ".codex/config.toml",
+        ROOT / "bots/baseline/main.py",
+        ROOT / "configs/eval_matrix.toml",
     ):
         if not required.exists():
             problems.append(f"Missing: {required.relative_to(ROOT)}")

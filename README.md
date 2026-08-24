@@ -1,121 +1,104 @@
-# Florent Code League bot workspace
+# Karrigan — Florent Code League bot
 
-A reproducible workspace for developing, testing, reviewing, versioning, and
-submitting a Florent Code League bot.
+Karrigan is a complete Python bot for the Florent Code League. It builds a
+scalable titanium economy, maintains conveyor routes, adapts builders to the
+current map state, defends its Core, and converts surplus capacity into sustained
+pressure on the opponent.
 
-**Rules snapshot:** verified against the public documentation, tutorials, changelog, and map-pool page on **2026-08-05**. The platform can change during the competition, so run `make sync-maps` and review the changelog before promoting a submission.
+The repository contains the submission-ready bot, an identical frozen comparator,
+local evaluation tools, focused tests, and guarded package/upload commands. It
+does not include private match data, generated reports, submission archives, or
+the internal experiment history used to develop the bot.
 
-## Current release of record
+## Strategy
 
-The trusted local comparator is the immutable **v0047 pressure-economy steward** at
-`bots/versions/v0047_pressure-economy-steward_20260821-0200_eeafad8f`. The mutable
-`bots/candidate/` tree is an exact production copy of that snapshot after the
-rejected v411 experiment was rolled back. Older local snapshots are intentionally
-not retained; their hypotheses and results remain in `experiments/`, `UPDATES.md`,
-and the ignored `reports/` evidence directories.
+- The Core grows the workforce in stages, preserves construction liquidity, and
+  supplies ammunition only when the economy and threat state justify it.
+- One permanent defender protects the economic floor while two permanent
+  attackers maintain pressure; remaining builders choose tasks dynamically.
+- Defenders discover ore, build Harvesters, connect directed Conveyor chains,
+  repair broken routes, and reinforce home defense.
+- Attackers scout for the enemy Core, deploy forward Sentinels, sabotage loaded
+  logistics, and cage valuable enemy territory.
+- Dynamic builders switch among economy, repair, defense, raiding, and forward
+  support instead of remaining idle after their original task ends.
+- All movement and work are deterministic, bounded, and guarded by the matching
+  `can_*` API call.
 
-The platform observation state in `state/live_state.json` is historical operational
-evidence and is not the local comparison baseline. Do not infer a new promotion or
-activation from packaging alone.
+See [the strategy guide](docs/STRATEGY.md) for the architecture and Store
+protocol.
 
-## Start here
+## Repository layout
 
-1. Install Python 3.12 or 3.13.
-2. Install and authenticate the game CLI:
-   ```bash
-   python -m pip install --upgrade fcode
-   fcode login
-   ```
-3. Install Codex and authenticate it:
-   ```bash
-   codex login
-   ```
-4. Run the local checks:
-   ```bash
-   make refresh-start
-   make doctor
-   make codex-doctor
-   make setup-codex-v1
-   make sync-maps
-   make lint
-   make smoke
-   make eval-regression
-   make eval-local
-   ```
-   The evaluation configs pin the v0047 comparator. Keep the short smoke and
-   all-map regression checks reproducible before considering a new candidate.
-5. Open Codex in this repository and give it one bounded hypothesis, for example:
-   ```text
-   Implement docs/CURRENT_PLAN.md in one Luna XHigh session. Run focused checks,
-   inspect the diff, and stop after the smoke tier.
-   ```
-   External planning and review are optional release tools, not the default
-   implementation workflow.
-6. Root and nested `AGENTS.md` files route Codex through `docs/START_HERE.md`,
-   durable state, and only the relevant detailed documents.
+```text
+bots/candidate/   submission-ready bot
+bots/baseline/    frozen comparator for local evaluation
+configs/          smoke, regression, and release matrices
+scripts/          evaluation, replay, package, upload, and activation tools
+tests/            deterministic offline tests
+docs/             strategy, evaluation, submission, and game references
+```
 
-7. After an approved candidate passes the release and remote gates, an operator
-   can package and deploy it with:
-   ```bash
-   make release-live SLUG=my-change
-   ```
-   Live commands are platform writes. Run them only after reviewing
-   `scripts/AGENTS.md`, `docs/SUBMISSION_AND_VERSIONING.md`,
-   `docs/LIVE_AUTOPILOT.md`, and fresh `state/live_state.json`.
+## Setup
 
-## Working agreement
+Requirements: Python 3.12 or 3.13, [`uv`](https://docs.astral.sh/uv/), and the
+Florent Code League CLI.
 
-- Change one bounded hypothesis at a time and compare it with the current release
-  of record before promotion.
-- Keep `bots/baseline/` and `bots/versions/` immutable during experiments. The
-  retained v0047 snapshot is the rollback source; `bots/candidate/` is the only
-  mutable upload tree.
-- Save human-readable experiment notes and metrics. Generated replays, caches,
-  temporary experiment configs, and handoff archives are ignored by Git.
-- A failed candidate is rolled back to exact v0047 parity. Promotion requires a
-  direct, side-aware comparison plus clean reliability evidence.
+```bash
+uv sync
+uv run fcode login
+make sync-maps
+make check
+```
 
-## Key documents
+`make check` runs the pinned Ruff lint gate, 51 focused tests, and Python
+compilation checks. Synced maps, reports, replays, packages, credentials, caches,
+and local experiment data are ignored by Git.
 
-- [`docs/START_HERE.md`](docs/START_HERE.md): generated concise startup context for every new Codex session.
-- [`docs/CURRENT_PLAN.md`](docs/CURRENT_PLAN.md): the one currently approved bounded plan, or an explicit no-plan placeholder.
-- [`state/project_state.json`](state/project_state.json): machine-readable current milestone, hypothesis, experiment, and next task.
-- [`UPDATES.md`](UPDATES.md): durable cross-session change, deployment, score, and rollback history.
-- [`GAME_RULES.md`](GAME_RULES.md): current rules, entities, API, map pool, tutorial lessons, and known tutorial traps.
-- [`AGENTS.md`](AGENTS.md): compact permanent instructions loaded by Codex.
-- [`docs/CODEX_HARNESS.md`](docs/CODEX_HARNESS.md): verified native-V1/process-fallback Sol → Luna → Sol orchestration.
-- [`docs/LIVE_AUTOPILOT.md`](docs/LIVE_AUTOPILOT.md): autonomous resumable upload, activation, observation, promotion, and rollback.
-- [`docs/SUBMISSION_AND_VERSIONING.md`](docs/SUBMISSION_AND_VERSIONING.md): exact CLI and immutable-version workflow.
-- [`docs/EVALUATION_PLAN.md`](docs/EVALUATION_PLAN.md): local, remote, and live-ladder evaluation with metrics and gates.
-- [`docs/IMPLEMENTATION_PLAN.md`](docs/IMPLEMENTATION_PLAN.md): staged bot architecture and strategy roadmap.
-- [`docs/REPOSITORY_STRUCTURE.md`](docs/REPOSITORY_STRUCTURE.md): repository map and ownership.
-- [`docs/REPOSITORY_CLEANUP.md`](docs/REPOSITORY_CLEANUP.md): retained release, cleanup scope, and verification record.
-- [`docs/PROJECT_CONSIDERATIONS.md`](docs/PROJECT_CONSIDERATIONS.md): risks, anti-patterns, and extra recommendations.
-- [`docs/SELF_REVIEW.md`](docs/SELF_REVIEW.md): verification performed, limitations, and unresolved checks.
-- [`docs/SOURCE_INDEX.md`](docs/SOURCE_INDEX.md): public sources and authority rules.
+## Run and evaluate
 
-## Safety defaults
+```bash
+make smoke            # four quick local games
+make eval-regression  # 15-map screening gate
+make eval-local       # 60-game release matrix
+make remote-gate      # server-side validation
+```
 
-- Autonomous live operations are enabled by policy only after `live-bootstrap` records a rollback target.
-- Upload, activation, observation, promotion, and rollback are durable across sessions.
-- Local evaluation runs both sides, multiple maps, and deterministic seeds.
-- The working candidate is never treated as an immutable release.
-- All game actions must be gated by their matching `can_*` predicate.
-- Costs are queried through the API rather than hard-coded.
-- Uncaught exceptions are treated as fatal because they permanently destroy that unit.
-- Local tests enforce the ladder's 10 ms per-unit, per-round CPU limit.
+All local matrices enforce the ladder's 10 ms limit and compare both side
+orders where applicable. Reports are written under `reports/`.
 
-## Important current balance note
+To inspect a single replay:
 
-The **2026-08-04** changelog changed Gunner and Sentinel balance. Current values include:
+```bash
+uv run fcode run bots/candidate bots/baseline MAP --seed 1 --tle 10 \
+  --replay replays/example.replay26
+uv run fcode watch replays/example.replay26
+```
 
-- Gunner: 25 HP, 20 Ti base cost, 7 damage, 4 ammo/shot, +20% scale.
-- Sentinel: 40 HP, 30 Ti base cost, 18 damage, 10 ammo/shot, 2-round reload.
+## Package and submit
 
-Do not copy old snippets that assume 10-damage, 10-Ti, 2-ammo Gunners or 3-round Sentinel reloads.
+```bash
+make package SLUG=release
+uv run python scripts/submit_candidate.py artifacts/submissions/FILE.zip \
+  --name karrigan-release --confirm
+uv run python scripts/activate_submission.py VERSION --confirm
+```
 
-## Public-use status
+Packaging creates an ignored immutable snapshot, ZIP, and SHA-256 manifest.
+Upload and activation are deliberately separate commands and both platform
+writes require explicit confirmation. See
+[submission and versioning](docs/SUBMISSION_AND_VERSIONING.md) for details.
 
-No open-source license has been selected. Publishing this repository makes the
-source visible but does not grant reuse rights. Add the intended license before
-describing the project as open source.
+## Documentation
+
+- [Strategy and architecture](docs/STRATEGY.md)
+- [Evaluation methodology](docs/EVALUATION_PLAN.md)
+- [Submission and versioning](docs/SUBMISSION_AND_VERSIONING.md)
+- [Repository structure](docs/REPOSITORY_STRUCTURE.md)
+- [Game rules snapshot](GAME_RULES.md)
+- [Official source index](docs/SOURCE_INDEX.md)
+
+## License
+
+Copyright © 2026 Fredrik Nguyen. This is source-available competition code;
+no permission to reuse or redistribute it is granted. See [LICENSE](LICENSE).

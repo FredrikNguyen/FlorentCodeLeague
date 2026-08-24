@@ -20,7 +20,6 @@ def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser()
     parser.add_argument("--source", default="bots/candidate")
     parser.add_argument("--slug", required=True)
-    parser.add_argument("--experiment")
     return parser.parse_args()
 
 
@@ -86,7 +85,6 @@ def main() -> int:
         "files": len(entries),
         "git_sha": git_value("rev-parse", "HEAD"),
         "git_status": git_value("status", "--short"),
-        "experiment": args.experiment,
     }
     save_json(archive.with_suffix(".manifest.json"), manifest)
     print(f"Created {archive}")
