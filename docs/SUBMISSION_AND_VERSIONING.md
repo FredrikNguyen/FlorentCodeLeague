@@ -41,7 +41,7 @@ Uploading does not activate the bot:
 ```bash
 uv run python scripts/submit_candidate.py \
   artifacts/submissions/FILE.zip \
-  --name karrigan-release \
+  --name florent-bot-release \
   --confirm
 ```
 

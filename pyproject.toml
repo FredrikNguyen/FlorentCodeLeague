@@ -1,7 +1,7 @@
 [project]
 name = "florent-code-league-bot"
 version = "0.1.0"
-description = "Karrigan, a deterministic Florent Code League competition bot"
+description = "A deterministic Florent Code League competition bot"
 requires-python = ">=3.12,<3.14"
 dependencies = [
     "fcode>=2.3.4",

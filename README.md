@@ -1,6 +1,6 @@
-# Karrigan — Florent Code League bot
+# Florent Code League bot
 
-Karrigan is a complete Python bot for the Florent Code League. It builds a
+This is a complete Python bot for the Florent Code League. It builds a
 scalable titanium economy, maintains conveyor routes, adapts builders to the
 current map state, defends its Core, and converts surplus capacity into sustained
 pressure on the opponent.
@@ -80,7 +80,7 @@ uv run fcode watch replays/example.replay26
 ```bash
 make package SLUG=release
 uv run python scripts/submit_candidate.py artifacts/submissions/FILE.zip \
-  --name karrigan-release --confirm
+  --name florent-bot-release --confirm
 uv run python scripts/activate_submission.py VERSION --confirm
 ```
 

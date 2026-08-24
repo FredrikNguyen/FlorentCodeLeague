@@ -1,6 +1,6 @@
 # Strategy and architecture
 
-Karrigan is an economy-first control bot with fixed strategic floors and a
+The bot uses an economy-first control strategy with fixed strategic floors and a
 dynamic workforce. Every game unit receives its own persistent `Player`
 instance; coordination between units uses the game's delayed 16-slot Global
 Store and visible map state.
