@@ -10,6 +10,12 @@ local evaluation tools, focused tests, and guarded package/upload commands. It
 does not include private match data, generated reports, submission archives, or
 the internal experiment history used to develop the bot.
 
+## Gameplay
+
+<img src="https://code.florent.vc/media/game-clash.jpg" alt="Florent Code League gameplay: opposing teams' bots and conveyor networks meet on the battlefield" width="760" />
+
+*Screenshot from the [official Florent Code League website](https://code.florent.vc/). This illustrates the game; it is not a recording of my own bot.*
+
 ## Strategy
 
 - The Core grows the workforce in stages, preserves construction liquidity, and
